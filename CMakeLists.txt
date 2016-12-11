@@ -7,6 +7,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -malign-power -malign-natura
 # message("-- ibmdb2i CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}")
 # message("-- ibmdb2i CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG}")
 # message("-- ibmdb2i CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE}")
+include_directories(BEFORE special/include)
 include_directories (
   ../../include
   ../../sql 
