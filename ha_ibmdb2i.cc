@@ -1744,7 +1744,7 @@ bool ha_ibmdb2i::can_switch_engines(void)
 /*=================================*/
 {
   DBUG_ENTER("ha_ibmdb2i::can_switch_engines");
-
+/*
   int rc = 0;
   FILE_HANDLE queryFile = 0;
   uint32 resultRowLen;  
@@ -1789,6 +1789,8 @@ bool ha_ibmdb2i::can_switch_engines(void)
     bridge()->deallocateFile(queryFile);
   }
   DBUG_RETURN(can_switch);
+*/
+  DBUG_RETURN(false);
 }
 
 
