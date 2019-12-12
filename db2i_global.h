@@ -38,7 +38,7 @@ OF SUCH DAMAGE.
 #define DB2I_GLOBAL_H
 
 #define MYSQL_SERVER 1
-
+#include <my_global.h>
 // #include <memory.h>
 // #include <pthread/bits/stdc++.h>
 #include <sys/time.h>
@@ -51,7 +51,6 @@ OF SUCH DAMAGE.
 #include <stdarg.h>
 #include <string.h>
 // #include <macros.h>
-#include <my_global.h>
 #include <my_sys.h>
 #include "sql_priv.h"
 #include "sql_show.h"
