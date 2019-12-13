@@ -166,8 +166,8 @@ int32 initCharsetSupport()
   pthread_mutex_init(&iconvMapHashMutex,MY_MUTEX_INIT_FAST);
   my_hash_init(&iconvMapHash, &my_charset_bin, 10, offsetof(IconvMap, hashKey), sizeof(IconvMap::hashKey), 0, 0, HASH_UNIQUE);
 
-  init_alloc_root(&textDescMapMemroot, 2048, 0, MYF(0));
-  init_alloc_root(&iconvMapMemroot, 256, 0, MYF(0));
+  init_alloc_root(&textDescMapMemroot, "ibmdb2i", 2048, 0, MYF(0));
+  init_alloc_root(&iconvMapMemroot, "ibmdb2i", 256, 0, MYF(0));
 
   initMyconv();
   
