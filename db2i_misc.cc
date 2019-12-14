@@ -41,7 +41,7 @@ $A1 LiJian    11/29/10    Make object name uppercase on system i.
 
 #include "db2i_global.h"
 #include "db2i_misc.h"
-
+#include "handler.h"
 // was inline
 
 /**
