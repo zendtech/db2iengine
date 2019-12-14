@@ -49,7 +49,7 @@ $A1 LiJian    11/29/10    Make object name uppercase on system i.
 */
 EXTERN void stripExtraQuotes(char* name, uint maxLen)
 {
-  char* oldName = (char*)strdup(ha_thd(), name);
+  char* oldName = (char*)strdup(name);
   uint i = 0;
   uint j = 0;
   do
