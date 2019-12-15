@@ -484,7 +484,7 @@ static int ibmdb2i_savepoint_rollback(handlerton* hton, THD* thd, void* sv)
   {
     char name[64];
     genSavepointName(sv, name);
-    DBUG_PRINT("ibmdb2i_savepoint_rollback",("Rolling back %s", name));
+    DBUG_PRINT("ibmdb2i_savepoint_rollback",("Rolling back %s", name.str));
     rc = ha_ibmdb2i::doSavepointRollback(thd, name);
   } 
   DBUG_RETURN(rc);  
@@ -1662,7 +1662,7 @@ int ha_ibmdb2i::getNextIdVal(ulonglong *value)
   
   char queryBuffer[MAX_DB2_COLNAME_LENGTH + MAX_DB2_QUALIFIEDNAME_LENGTH + 64];
   strcpy(queryBuffer, " SELECT CAST(MAX( ");
-  convertMySQLNameToDB2Name(table->found_next_number_field->field_name, 
+  convertMySQLNameToDB2Name(table->found_next_number_field->field_name.str, 
                             strend(queryBuffer), 
                             MAX_DB2_COLNAME_LENGTH+1);
   strcat(queryBuffer, ") AS BIGINT) FROM ");    
@@ -1837,7 +1837,7 @@ int ha_ibmdb2i::reset_auto_increment(ulonglong value)
   query.append(fileName);
   query.append(STRING_WITH_LEN(" ALTER COLUMN "));
   char colName[MAX_DB2_COLNAME_LENGTH+1];
-  convertMySQLNameToDB2Name(table->found_next_number_field->field_name, 
+  convertMySQLNameToDB2Name(table->found_next_number_field->field_name.str, 
                             colName, 
                             sizeof(colName));
   query.append(colName);
@@ -2290,7 +2290,7 @@ int ha_ibmdb2i::create(const char *name, TABLE *table_arg,
     if ( field != table_arg->field ) // Not the first one
       query.append(STRING_WITH_LEN(" , "));
 
-    if (!convertMySQLNameToDB2Name((*field)->field_name, colName, sizeof(colName)))
+    if (!convertMySQLNameToDB2Name((*field)->field_name.str, colName, sizeof(colName)))
     {
       getErrTxt(DB2I_ERR_INVALID_NAME,"field",(*field)->field_name);
       DBUG_RETURN(DB2I_ERR_INVALID_NAME );
@@ -2382,7 +2382,7 @@ int ha_ibmdb2i::create(const char *name, TABLE *table_arg,
   if (create_info->alias)
     generateAndAppendRCDFMT(create_info->alias, query);
   else if (((TABLE_LIST*)(thd->lex->select_lex.table_list.first))->table_name)  
-    generateAndAppendRCDFMT((char*)((TABLE_LIST*)(thd->lex->select_lex.table_list.first))->table_name, query);
+    generateAndAppendRCDFMT((char*)((TABLE_LIST*)(thd->lex->select_lex.table_list.first))->table_name.str, query);
         
   DBUG_PRINT("ha_ibmdb2i::create", ("Sent to DB2: %s",query.c_ptr()));
   SqlStatementStream sqlStream(query.length());
@@ -2486,7 +2486,7 @@ int ha_ibmdb2i::add_index(TABLE *table_arg,
   {  
     for (int i = 0; i < (int) num_of_keys; ++i)
     {
-      if (strcmp(key_info[i].name, "PRIMARY") == 0)
+      if (strcmp(key_info[i].name.str, "PRIMARY") == 0)
       {
         primaryKey = i;
         break;
@@ -2576,7 +2576,7 @@ int ha_ibmdb2i::prepare_drop_index(TABLE *table_arg,
       query.append(STRING_WITH_LEN("DROP INDEX "));
       query.append(libName);
       query.append(STRING_WITH_LEN("."));
-      db2i_table::appendQualifiedIndexFileName(curKey.name, fileName, query);
+      db2i_table::appendQualifiedIndexFileName(curKey.name.str, fileName, query);
     }
     DBUG_PRINT("ha_ibmdb2i::prepare_drop_index", ("Sent to DB2: %s",query.c_ptr_safe()));
     sqlStream.addStatement(query);
@@ -2585,7 +2585,7 @@ int ha_ibmdb2i::prepare_drop_index(TABLE *table_arg,
     query.append(STRING_WITH_LEN("DROP INDEX "));
     query.append(libName);
     query.append(STRING_WITH_LEN("."));
-    db2i_table::appendQualifiedIndexFileName(curKey.name, fileName, query, db2i_table::ASCII_SQL, typeHex);
+    db2i_table::appendQualifiedIndexFileName(curKey.name.str, fileName, query, db2i_table::ASCII_SQL, typeHex);
     
     DBUG_PRINT("ha_ibmdb2i::prepare_drop_index", ("Sent to DB2: %s",query.c_ptr_safe()));
     shadowStream.addStatement(query);
@@ -3118,7 +3118,7 @@ int32 ha_ibmdb2i::buildCreateIndexStatement(SqlStatementStream& sqlStream,
 
     query.append(db2LibName);
     query.append('.');
-    if (db2i_table::appendQualifiedIndexFileName(key.name, db2FileName, query))
+    if (db2i_table::appendQualifiedIndexFileName(key.name.str, db2FileName, query))
     {
       getErrTxt(DB2I_ERR_INVALID_NAME,"index","*generated*");
       DBUG_RETURN(DB2I_ERR_INVALID_NAME );
