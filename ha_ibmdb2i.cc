@@ -56,6 +56,7 @@ OF SUCH DAMAGE.
 #include "db2i_charsetSupport.h"
 #include <sys/utsname.h>
 #include "db2i_safeString.h"
+#include <my_pthread.h>
 
 static const char __NOT_NULL_VALUE_EBCDIC = 0xF0; // '0'
 static const char __NULL_VALUE_EBCDIC = 0xF1; // '1'
@@ -484,7 +485,7 @@ static int ibmdb2i_savepoint_rollback(handlerton* hton, THD* thd, void* sv)
   {
     char name[64];
     genSavepointName(sv, name);
-    DBUG_PRINT("ibmdb2i_savepoint_rollback",("Rolling back %s", name.str));
+    DBUG_PRINT("ibmdb2i_savepoint_rollback",("Rolling back %s", name));
     rc = ha_ibmdb2i::doSavepointRollback(thd, name);
   } 
   DBUG_RETURN(rc);  
@@ -774,7 +775,7 @@ int ha_ibmdb2i::write_row(uchar * buf)
   if (last_start_bulk_insert_rc)
     DBUG_RETURN( last_start_bulk_insert_rc );
   
-  ha_statistic_increment(&SSV::ha_write_count);
+  increment_statistics(&SSV::ha_write_count);
   int rc = 0;
 
   bool fileHandleNeedsRelease = false;
@@ -897,7 +898,7 @@ int ha_ibmdb2i::prepareRowForWrite(char* data, char* nulls, bool honorIdentCols)
 int ha_ibmdb2i::update_row(const uchar * old_data, uchar * new_data)
 {
   DBUG_ENTER("ha_ibmdb2i::update_row");
-  ha_statistic_increment(&SSV::ha_update_count);
+  increment_statistics(&SSV::ha_update_count);
   int rc;
   
   bool fileHandleNeedsRelease = false;
@@ -945,7 +946,7 @@ int ha_ibmdb2i::update_row(const uchar * old_data, uchar * new_data)
 int ha_ibmdb2i::delete_row(const uchar * buf)
 {
   DBUG_ENTER("ha_ibmdb2i::delete_row");
-  ha_statistic_increment(&SSV::ha_delete_count);
+  increment_statistics(&SSV::ha_delete_count);
   
   bool needReleaseFile = false;
   int rc = 0;
@@ -1114,7 +1115,7 @@ int ha_ibmdb2i::index_read(uchar * buf, const uchar * key,
       break;
   }
   
-  ha_statistic_increment(&SSV::ha_read_key_count);
+  increment_statistics(&SSV::ha_read_key_count);
   rc = readFromBuffer(buf, readDirection);
   
   table->status= (rc ? STATUS_NOT_FOUND: 0);
@@ -1125,7 +1126,7 @@ int ha_ibmdb2i::index_read(uchar * buf, const uchar * key,
 int ha_ibmdb2i::index_next(uchar * buf)
 {
   DBUG_ENTER("ha_ibmdb2i::index_next");
-  ha_statistic_increment(&SSV::ha_read_next_count);
+  increment_statistics(&SSV::ha_read_next_count);
   
   int rc = readFromBuffer(buf, QMY_NEXT);
   
@@ -1137,7 +1138,7 @@ int ha_ibmdb2i::index_next(uchar * buf)
 int ha_ibmdb2i::index_next_same(uchar *buf, const uchar *key, uint keylen)
 {
   DBUG_ENTER("ha_ibmdb2i::index_next_same");
-  ha_statistic_increment(&SSV::ha_read_next_count);
+  increment_statistics(&SSV::ha_read_next_count);
   
   int rc = readFromBuffer(buf, QMY_NEXT_EQUAL);
   
@@ -1161,7 +1162,7 @@ int ha_ibmdb2i::index_read_last(uchar * buf, const uchar * key, uint key_len)
 int ha_ibmdb2i::index_prev(uchar * buf)
 {
   DBUG_ENTER("ha_ibmdb2i::index_prev");
-  ha_statistic_increment(&SSV::ha_read_prev_count);
+  increment_statistics(&SSV::ha_read_prev_count);
   
   int rc = readFromBuffer(buf, QMY_PREVIOUS);
 
@@ -1183,7 +1184,7 @@ int ha_ibmdb2i::index_first(uchar * buf)
   if (rc == 0)
   {
     doInitialRead(QMY_FIRST, DEFAULT_MAX_ROWS_TO_BUFFER);
-    ha_statistic_increment(&SSV::ha_read_first_count);
+    increment_statistics(&SSV::ha_read_first_count);
     rc = readFromBuffer(buf, QMY_NEXT);
   }
   
@@ -1205,7 +1206,7 @@ int ha_ibmdb2i::index_last(uchar * buf)
   if (rc == 0)
   {
     doInitialRead(QMY_LAST, DEFAULT_MAX_ROWS_TO_BUFFER);
-    ha_statistic_increment(&SSV::ha_read_last_count);
+    increment_statistics(&SSV::ha_read_last_count);
     rc = readFromBuffer(buf, QMY_PREVIOUS);
   }
   
@@ -1331,7 +1332,7 @@ int ha_ibmdb2i::rnd_next(uchar *buf)
   DBUG_ENTER("ha_ibmdb2i::rnd_next");
 
   if (unlikely(last_rnd_init_rc)) DBUG_RETURN(last_rnd_init_rc);
-  ha_statistic_increment(&SSV::ha_read_rnd_next_count);
+  increment_statistics(&SSV::ha_read_rnd_next_count);
   
   int rc;      
   
@@ -1354,7 +1355,7 @@ int ha_ibmdb2i::rnd_pos(uchar * buf, uchar *pos)
 {
   DBUG_ENTER("ha_ibmdb2i::rnd_pos");
   if (unlikely(last_rnd_init_rc)) DBUG_RETURN( last_rnd_init_rc);
-  ha_statistic_increment(&SSV::ha_read_rnd_count);
+  increment_statistics(&SSV::ha_read_rnd_count);
 
   currentRRN = my_get_ptr(pos, ref_length);
 
