@@ -75,7 +75,7 @@ static void ibmdb2i_drop_database(handlerton *hton, char* path);
 static int ibmdb2i_savepoint_set(handlerton *hton, THD* thd, void *sv);
 static int ibmdb2i_savepoint_rollback(handlerton *hton, THD* thd, void *sv);
 static int ibmdb2i_savepoint_release(handlerton *hton, THD* thd, void *sv);
-static uint ibmdb2i_alter_table_flags(uint flags);
+static alter_table_operations ibmdb2i_alter_table_flags(alter_table_operations flags);
 
 handlerton *ibmdb2i_hton;
 static bool was_ILE_inited;
@@ -510,7 +510,7 @@ static int ibmdb2i_savepoint_release(handlerton* hton, THD* thd, void* sv)
    DROP INDEX, and ALTER TABLE statements. These flags indicate that MySQL is not
    required to lock the table before calling the storage engine to add or drop the
    index(s).  */                    
-static uint ibmdb2i_alter_table_flags(uint flags)
+static alter_table_operations ibmdb2i_alter_table_flags(alter_table_operations flags)
 {
   return (HA_INPLACE_ADD_INDEX_NO_WRITE | HA_INPLACE_DROP_INDEX_NO_WRITE |
          HA_INPLACE_ADD_UNIQUE_INDEX_NO_WRITE | HA_INPLACE_DROP_UNIQUE_INDEX_NO_WRITE |
