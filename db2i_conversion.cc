@@ -1107,7 +1107,7 @@ int32 ha_ibmdb2i::convertMySQLtoDB2(Field* field, const DB2Field& db2Field, char
                 {
                   bytesToStore = ((Field_blob*)field)->get_length();                
                   bytesToPad = maxDisplayLength - bytesToStore;
-                  ((Field_blob*)field)->get_ptr((uchar**)&dataToStore);
+                  dataToStore = ((Field_blob*)field)->get_ptr();
                 }
                 else
                 {
