@@ -130,7 +130,7 @@ OF SUCH DAMAGE.
     
     char* SqlStatementStream::getNewSpace(size_t size)
     {
-      allocBase = (char*)sql_alloc(size + 15);
+      allocBase = (char*)my_malloc(size + 15, MYF(MY_THREAD_SPECIFIC | MY_FAE | MY_ZEROFILL));
       block = (char*)roundToQuadWordBdy(allocBase);
       return block;
     }
