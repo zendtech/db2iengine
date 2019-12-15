@@ -562,7 +562,7 @@ int ha_ibmdb2i::get_foreign_key_list(THD *thd, List<FOREIGN_KEY_INFO> *f_key_lis
                   convName + 1, (uint) (fieldName->Len -2), 1);
           else
             name = thd_make_lex_string(thd, name, convName, (uint) fieldName->Len, 1);
-          f_key_info.referenced_fields.push_back(name);
+          f_key_info.referenced_fields.push_back(name, thd->main_mem_root);
           if ((fld + 1) < FKCstDef->RefCnt)
             fieldName = fieldName + 1;                                 
         }
