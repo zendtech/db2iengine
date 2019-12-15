@@ -57,6 +57,7 @@ OF SUCH DAMAGE.
 #include <sys/utsname.h>
 #include "db2i_safeString.h"
 #include <my_pthread.h>
+#include <m_ctype.h>
 
 static const char __NOT_NULL_VALUE_EBCDIC = 0xF0; // '0'
 static const char __NULL_VALUE_EBCDIC = 0xF1; // '1'
@@ -3794,7 +3795,7 @@ void ha_ibmdb2i::generateAndAppendRCDFMT(const char* tableName, String& query)
          (!my_isascii(*tableName) ||
           !my_isalpha(system_charset_info, *tableName)))
   {
-    tableName += my_mbcharlen(system_charset_info, *tableName);
+    tableName += my_charlen(system_charset_info, tableName, tableName + strlen(tableName)); //TODO: investigate whether switch from my_mbcharlen is hazardous
   }
     
   if (unlikely(!(*tableName)))
@@ -3814,7 +3815,7 @@ void ha_ibmdb2i::generateAndAppendRCDFMT(const char* tableName, String& query)
         rcdfmt[r] = '_';
         
       ++r;
-      tableName += my_mbcharlen(system_charset_info, *tableName);
+      tableName += my_charlen(system_charset_info, tableName, tableName + strlen(tableName));
     }
     rcdfmt[r]= 0;
   }
