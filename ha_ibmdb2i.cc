@@ -2380,9 +2380,9 @@ int ha_ibmdb2i::create(const char *name, TABLE *table_arg,
   if (isTemporary)
     query.append(STRING_WITH_LEN(" ON COMMIT PRESERVE ROWS "));
   
-  if (create_info->alias)
-    generateAndAppendRCDFMT(create_info->alias, query);
-  else if (((TABLE_LIST*)(thd->lex->select_lex.table_list.first))->table_name)  
+  if (create_info->alias.str)
+    generateAndAppendRCDFMT(create_info->alias.str, query);
+  else if (((TABLE_LIST*)(thd->lex->select_lex.table_list.first))->table_name.str)  
     generateAndAppendRCDFMT((char*)((TABLE_LIST*)(thd->lex->select_lex.table_list.first))->table_name.str, query);
         
   DBUG_PRINT("ha_ibmdb2i::create", ("Sent to DB2: %s",query.c_ptr()));
@@ -3198,7 +3198,7 @@ int32 ha_ibmdb2i::buildIndexFieldList(String& appendHere,
     KEY_PART_INFO& kpi = key.key_part[j];
     Field* field = kpi.field;
     
-    convertMySQLNameToDB2Name(field->field_name, 
+    convertMySQLNameToDB2Name(field->field_name.str, 
                               colName, 
                               sizeof(colName));
     appendHere.append(colName);
@@ -3240,7 +3240,7 @@ int32 ha_ibmdb2i::generateShadowIndex(SqlStatementStream& stream,
   shadowQuery.append(STRING_WITH_LEN("CREATE INDEX "));
   shadowQuery.append(libName);
   shadowQuery.append('.');
-  if (db2i_table::appendQualifiedIndexFileName(key.name, fileName, shadowQuery, db2i_table::ASCII_SQL, typeHex))
+  if (db2i_table::appendQualifiedIndexFileName(key.name.str, fileName, shadowQuery, db2i_table::ASCII_SQL, typeHex))
   {
     getErrTxt(DB2I_ERR_INVALID_NAME,"index","*generated*");
     return DB2I_ERR_INVALID_NAME;
