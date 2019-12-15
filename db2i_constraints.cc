@@ -464,8 +464,6 @@ int ha_ibmdb2i::get_foreign_key_list(THD *thd, List<FOREIGN_KEY_INFO> *f_key_lis
   constraint_hdr* cstHdr;      // Pointer to a cst header structure
   FK_constraint* FKCstDef;     // Pointer to definition of foreign key constraint
   cst_name* fieldName;         // Pointer to field name structure
-  const char *method;
-  ulong methodLen;
   char* tempPtr;               // Temp pointer for traversing constraint space
   char convName[128];
 
@@ -579,15 +577,11 @@ int ha_ibmdb2i::get_foreign_key_list(THD *thd, List<FOREIGN_KEY_INFO> *f_key_lis
         {
           case QMY_NOACTION:
             { 
-              method = "NO ACTION";
-              methodLen=9; 
               f_key_info.update_method = enum_fk_option::FK_OPTION_NO_ACTION;
              }
             break;
           case QMY_RESTRICT:
             {
-              method = "RESTRICT";
-              methodLen = 8;  
               f_key_info.update_method = enum_fk_option::FK_OPTION_RESTRICT;
             }
             break;
@@ -597,42 +591,30 @@ int ha_ibmdb2i::get_foreign_key_list(THD *thd, List<FOREIGN_KEY_INFO> *f_key_lis
               break;
             }
         }
-        // f_key_info.update_method = thd_make_lex_string(
-        //             thd, f_key_info.update_method, method, methodLen, 1);
         switch(FKCstDef->DltMethod)
         {
           case QMY_CASCADE: 
             {
-              method = "CASCADE";
-              methodLen = 7;  
               f_key_info.delete_method = enum_fk_option::FK_OPTION_CASCADE;
             }
             break;
           case QMY_SETDFT: 
             {
-              method = "SET DEFAULT";
-              methodLen = 11; 
               f_key_info.delete_method = enum_fk_option::FK_OPTION_SET_DEFAULT;
             }
             break;
           case QMY_SETNULL: 
             {
-              method = "SET NULL";
-              methodLen = 8;  
               f_key_info.delete_method = enum_fk_option::FK_OPTION_SET_NULL;
             }
             break; 
           case QMY_NOACTION: 
             {
-              method = "NO ACTION";
-              methodLen = 9;  
               f_key_info.delete_method = enum_fk_option::FK_OPTION_NO_ACTION;
             }
             break;
           case QMY_RESTRICT: 
             {
-              method = "RESTRICT";
-              methodLen = 8;  
               f_key_info.delete_method = enum_fk_option::FK_OPTION_RESTRICT;
             }
             break;
@@ -642,8 +624,6 @@ int ha_ibmdb2i::get_foreign_key_list(THD *thd, List<FOREIGN_KEY_INFO> *f_key_lis
               break;
             }
         }
-        // f_key_info.delete_method = thd_make_lex_string(
-        //           thd, f_key_info.delete_method, method, methodLen, 1);
         f_key_info.referenced_key_name= thd_make_lex_string(thd, 0, (char *)"", 1, 1);
         FOREIGN_KEY_INFO *pf_key_info = (FOREIGN_KEY_INFO *)
                   thd_memdup(thd, &f_key_info, sizeof(FOREIGN_KEY_INFO));
