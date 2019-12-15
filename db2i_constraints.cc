@@ -154,7 +154,7 @@ but we do not want this so comment out the following line
         Field** field = fields;
         do
         {
-          if (strcmp((*field)->field_name, curColumn->field_name.str) == 0)
+          if (strcmp((*field)->field_name.to_string(), curColumn->field_name.str) == 0)
           {
             int rc = updateAssociatedSortSequence((*field)->charset(),
                                                   fileSortSequenceType,
