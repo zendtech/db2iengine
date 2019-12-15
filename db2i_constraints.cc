@@ -154,7 +154,7 @@ but we do not want this so comment out the following line
         Field** field = fields;
         do
         {
-          if (strcmp((*field)->field_name.to_string(), curColumn->field_name.str) == 0)
+          if (strcmp(((*field)->field_name).str, curColumn->field_name.str) == 0)
           {
             int rc = updateAssociatedSortSequence((*field)->charset(),
                                                   fileSortSequenceType,
@@ -228,32 +228,38 @@ but we do not want this so comment out the following line
         appendHere.append(STRING_WITH_LEN(") "));
       }
       
-      appendHere.append(STRING_WITH_LEN("ON DELETE "));
-      switch (fk->delete_opt)
+      if (fk->delete_opt != enum_fk_option::FK_OPTION_UNDEF)
       {
-        case Foreign_key::FkAction::Restrict:
-          appendHere.append(STRING_WITH_LEN("RESTRICT ")); break;
-        case Foreign_key::FkAction::Cascade:
-          appendHere.append(STRING_WITH_LEN("CASCADE ")); break;
-        case Foreign_key::FkAction::SetNull:
-          appendHere.append(STRING_WITH_LEN("SET NULL ")); break;
-        case Foreign_key::FkAction::NoAction:
-          appendHere.append(STRING_WITH_LEN("NO ACTION ")); break;
-        case Foreign_key::FkAction::SetDefault:
-          appendHere.append(STRING_WITH_LEN("SET DEFAULT ")); break;
-        default:
-          return HA_ERR_CANNOT_ADD_FOREIGN; break;
+        appendHere.append(STRING_WITH_LEN("ON DELETE "));
+        switch (fk->delete_opt)
+        {
+          case enum_fk_option::FK_OPTION_RESTRICT:
+            appendHere.append(STRING_WITH_LEN("RESTRICT ")); break;
+          case enum_fk_option::FK_OPTION_CASCADE:
+            appendHere.append(STRING_WITH_LEN("CASCADE ")); break;
+          case enum_fk_option::FK_OPTION_SET_NULL:
+            appendHere.append(STRING_WITH_LEN("SET NULL ")); break;
+          case enum_fk_option::FK_OPTION_NO_ACTION:
+            appendHere.append(STRING_WITH_LEN("NO ACTION ")); break;
+          case enum_fk_option::FK_OPTION_SET_DEFAULT:
+            appendHere.append(STRING_WITH_LEN("SET DEFAULT ")); break;
+          default:
+            return HA_ERR_CANNOT_ADD_FOREIGN; break;
+        }
       }
       
-      appendHere.append(STRING_WITH_LEN("ON UPDATE "));
-      switch (fk->update_opt)
+      if (fk->update_opt != enum_fk_option::FK_OPTION_UNDEF)
       {
-        case Foreign_key::FkAction::Restrict:
-          appendHere.append(STRING_WITH_LEN("RESTRICT ")); break;
-        case Foreign_key::FkAction::NoAction:
-          appendHere.append(STRING_WITH_LEN("NO ACTION ")); break;
-        default:
-          return HA_ERR_CANNOT_ADD_FOREIGN; break;
+        appendHere.append(STRING_WITH_LEN("ON UPDATE "));
+        switch (fk->update_opt)
+        {
+          case enum_fk_option::FK_OPTION_RESTRICT:
+            appendHere.append(STRING_WITH_LEN("RESTRICT ")); break;
+          case enum_fk_option::FK_OPTION_NO_ACTION:
+            appendHere.append(STRING_WITH_LEN("NO ACTION ")); break;
+          default:
+            return HA_ERR_CANNOT_ADD_FOREIGN; break;
+        }
       }
      
     }
@@ -500,7 +506,7 @@ int ha_ibmdb2i::get_foreign_key_list(THD *thd, List<FOREIGN_KEY_INFO> *f_key_lis
       if (cstHdr->CstType[0] == QMY_CST_FK)   // If this is a foreign key constraint
       {
         FOREIGN_KEY_INFO f_key_info;
-        LEX_STRING *name= 0;
+        MYSQL_CONST_LEX_STRING *name= 0;
         tempPtr = (char*)(tempPtr + cstHdr->CstDefOff);
         FKCstDef = (FK_constraint_t*)tempPtr;
 
@@ -526,7 +532,7 @@ int ha_ibmdb2i::get_foreign_key_list(THD *thd, List<FOREIGN_KEY_INFO> *f_key_lis
            name = thd_make_lex_string(thd, name,
                  convName + 1, (uint) (fieldName->Len - 2), 1);
          else
-           name = thd_make_lex_string(thd, name, convName, (uint) fieldName->Len, 1);
+           name = thd_make_lex_string(thd, (MYSQL_CONST_LEX_STRING*)name, convName, (uint) fieldName->Len, 1);
           f_key_info.foreign_fields.push_back(name);
           if ((fld + 1) < FKCstDef->KeyCnt)
             fieldName = fieldName + 1;  
@@ -562,7 +568,7 @@ int ha_ibmdb2i::get_foreign_key_list(THD *thd, List<FOREIGN_KEY_INFO> *f_key_lis
                   convName + 1, (uint) (fieldName->Len -2), 1);
           else
             name = thd_make_lex_string(thd, name, convName, (uint) fieldName->Len, 1);
-          f_key_info.referenced_fields.push_back(name, thd->main_mem_root);
+          f_key_info.referenced_fields.push_back(name, thd->mem_root);
           if ((fld + 1) < FKCstDef->RefCnt)
             fieldName = fieldName + 1;                                 
         }
@@ -575,54 +581,69 @@ int ha_ibmdb2i::get_foreign_key_list(THD *thd, List<FOREIGN_KEY_INFO> *f_key_lis
             { 
               method = "NO ACTION";
               methodLen=9; 
+              f_key_info.update_method = enum_fk_option::FK_OPTION_NO_ACTION;
              }
             break;
           case QMY_RESTRICT:
             {
               method = "RESTRICT";
               methodLen = 8;  
+              f_key_info.update_method = enum_fk_option::FK_OPTION_RESTRICT;
             }
             break;
-          default: break;
+          default:
+            {
+              f_key_info.update_method = enum_fk_option::FK_OPTION_NO_ACTION;
+              break;
+            }
         }
-        f_key_info.update_method = thd_make_lex_string(
-                    thd, f_key_info.update_method, method, methodLen, 1);
+        // f_key_info.update_method = thd_make_lex_string(
+        //             thd, f_key_info.update_method, method, methodLen, 1);
         switch(FKCstDef->DltMethod)
         {
           case QMY_CASCADE: 
             {
               method = "CASCADE";
               methodLen = 7;  
+              f_key_info.delete_method = enum_fk_option::FK_OPTION_CASCADE;
             }
             break;
           case QMY_SETDFT: 
             {
               method = "SET DEFAULT";
               methodLen = 11; 
+              f_key_info.delete_method = enum_fk_option::FK_OPTION_SET_DEFAULT;
             }
             break;
           case QMY_SETNULL: 
             {
               method = "SET NULL";
               methodLen = 8;  
+              f_key_info.delete_method = enum_fk_option::FK_OPTION_SET_NULL;
             }
             break; 
           case QMY_NOACTION: 
             {
               method = "NO ACTION";
               methodLen = 9;  
+              f_key_info.delete_method = enum_fk_option::FK_OPTION_NO_ACTION;
             }
             break;
           case QMY_RESTRICT: 
             {
               method = "RESTRICT";
               methodLen = 8;  
+              f_key_info.delete_method = enum_fk_option::FK_OPTION_RESTRICT;
             }
             break;
-          default: break;
+          default:
+            {
+              f_key_info.delete_method = enum_fk_option::FK_OPTION_NO_ACTION;
+              break;
+            }
         }
-        f_key_info.delete_method = thd_make_lex_string(
-                  thd, f_key_info.delete_method, method, methodLen, 1);
+        // f_key_info.delete_method = thd_make_lex_string(
+        //           thd, f_key_info.delete_method, method, methodLen, 1);
         f_key_info.referenced_key_name= thd_make_lex_string(thd, 0, (char *)"", 1, 1);
         FOREIGN_KEY_INFO *pf_key_info = (FOREIGN_KEY_INFO *)
                   thd_memdup(thd, &f_key_info, sizeof(FOREIGN_KEY_INFO));
