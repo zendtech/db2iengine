@@ -364,7 +364,7 @@ void db2i_table::filenameToTablename(const char* in, char* out, size_t outlen)
     return;
   }
 
-  char* temp = (char*)malloc(outlen); //TODO: properly replace sql_alloc() here
+  char* temp = (char*)my_malloc(outlen, MYF(MY_THREAD_SPECIFIC | MY_FAE | MY_ZEROFILL));
   
   const char* part1, *part2, *part3, *part4;
   part1 = in;
