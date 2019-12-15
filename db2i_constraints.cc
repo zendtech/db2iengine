@@ -228,38 +228,32 @@ but we do not want this so comment out the following line
         appendHere.append(STRING_WITH_LEN(") "));
       }
       
-      if (fk->delete_opt != Foreign_key::FK_OPTION_UNDEF)
+      appendHere.append(STRING_WITH_LEN("ON DELETE "));
+      switch (fk->delete_opt)
       {
-        appendHere.append(STRING_WITH_LEN("ON DELETE "));
-        switch (fk->delete_opt)
-        {
-          case Foreign_key::FK_OPTION_RESTRICT:
-            appendHere.append(STRING_WITH_LEN("RESTRICT ")); break;
-          case Foreign_key::FK_OPTION_CASCADE:
-            appendHere.append(STRING_WITH_LEN("CASCADE ")); break;
-          case Foreign_key::FK_OPTION_SET_NULL:
-            appendHere.append(STRING_WITH_LEN("SET NULL ")); break;
-          case Foreign_key::FK_OPTION_NO_ACTION:
-            appendHere.append(STRING_WITH_LEN("NO ACTION ")); break;
-          case Foreign_key::FK_OPTION_DEFAULT:
-            appendHere.append(STRING_WITH_LEN("SET DEFAULT ")); break;
-          default:
-            return HA_ERR_CANNOT_ADD_FOREIGN; break;
-        }
+        case Foreign_key::FkAction::Restrict:
+          appendHere.append(STRING_WITH_LEN("RESTRICT ")); break;
+        case Foreign_key::FkAction::Cascade:
+          appendHere.append(STRING_WITH_LEN("CASCADE ")); break;
+        case Foreign_key::FkAction::SetNull:
+          appendHere.append(STRING_WITH_LEN("SET NULL ")); break;
+        case Foreign_key::FkAction::NoAction:
+          appendHere.append(STRING_WITH_LEN("NO ACTION ")); break;
+        case Foreign_key::FkAction::SetDefault:
+          appendHere.append(STRING_WITH_LEN("SET DEFAULT ")); break;
+        default:
+          return HA_ERR_CANNOT_ADD_FOREIGN; break;
       }
       
-      if (fk->update_opt != Foreign_key::FK_OPTION_UNDEF)
+      appendHere.append(STRING_WITH_LEN("ON UPDATE "));
+      switch (fk->update_opt)
       {
-        appendHere.append(STRING_WITH_LEN("ON UPDATE "));
-        switch (fk->update_opt)
-        {
-          case Foreign_key::FK_OPTION_RESTRICT:
-            appendHere.append(STRING_WITH_LEN("RESTRICT ")); break;
-          case Foreign_key::FK_OPTION_NO_ACTION:
-            appendHere.append(STRING_WITH_LEN("NO ACTION ")); break;
-          default:
-            return HA_ERR_CANNOT_ADD_FOREIGN; break;
-        }
+        case Foreign_key::FkAction::Restrict:
+          appendHere.append(STRING_WITH_LEN("RESTRICT ")); break;
+        case Foreign_key::FkAction::NoAction:
+          appendHere.append(STRING_WITH_LEN("NO ACTION ")); break;
+        default:
+          return HA_ERR_CANNOT_ADD_FOREIGN; break;
       }
      
     }
