@@ -363,8 +363,8 @@ void db2i_table::filenameToTablename(const char* in, char* out, size_t outlen)
     smartFilenameToTableName(in, out, outlen);
     return;
   }
-  
-  char* temp = (char*)sql_alloc(outlen);
+
+  char* temp = (char*)malloc(outlen); //TODO: properly replace sql_alloc() here
   
   const char* part1, *part2, *part3, *part4;
   part1 = in;
@@ -398,6 +398,7 @@ void db2i_table::filenameToTablename(const char* in, char* out, size_t outlen)
       strcat(out, part4);
     }
   }
+  free(temp);
 }
 
 void db2i_table::getDB2LibNameFromPath(const char* path, char* lib, NameFormatFlags format)
@@ -539,7 +540,7 @@ db2i_file::db2i_file(db2i_table* table, int index) : db2Table(table)
 
     const char* asciiFileName = table->getDB2TableName(db2i_table::ASCII_NATIVE);
 
-    db2i_table::appendQualifiedIndexFileName(table->getMySQLTable()->key_info[index].name,
+    db2i_table::appendQualifiedIndexFileName(table->getMySQLTable()->key_info[index].name.str,
                                            asciiFileName,
                                            qualifiedPath,
                                            db2i_table::ASCII_NATIVE,
