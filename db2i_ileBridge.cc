@@ -927,7 +927,7 @@ int32 db2i_ileBridge::savepoint(uint8 function,
   return rc;
 }
 
-static ILEMemHandle traceSpcHandle;
+static ILEMemHandle traceSpcHandle __attribute__((aligned(16)));
 /**
   Do initialization for  the QMY_* APIs.
   
