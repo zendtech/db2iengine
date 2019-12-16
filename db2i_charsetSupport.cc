@@ -141,6 +141,7 @@ struct IconvMap
   
   @return  0 if successful. Failure otherwise
 */
+
 int32 initCharsetSupport()
 {
   DBUG_ENTER("initCharsetSupport");
@@ -151,20 +152,25 @@ int32 initCharsetSupport()
     DBUG_PRINT("initCharsetSupport", ("conversion srvpgm activation failed"));
     DBUG_RETURN(1);
   }
-
+  
+  DBUG_PRINT("initCharsetSupport", ("conversion srvpgm activation succeeded"));
   QlgCvtTextDescToDesc_sym = (ILEpointer*)malloc_aligned(sizeof(ILEpointer));
+  DBUG_PRINT("initCharsetSupport", ("allocated ILE pointer"));
   if (_ILESYM(QlgCvtTextDescToDesc_sym, actmark, "QlgCvtTextDescToDesc") == -1)
   {
     DBUG_PRINT("initCharsetSupport", 
         ("resolve of QlgCvtTextDescToDesc failed"));
     DBUG_RETURN(errno);
   }
+  DBUG_PRINT("initCharsetSupport",  ("resolve of QlgCvtTextDescToDesc succeeded"));
 
   pthread_mutex_init(&textDescMapHashMutex,MY_MUTEX_INIT_FAST);
   my_hash_init(&textDescMapHash, &my_charset_bin, 10, offsetof(TextDescMap, hashKey), sizeof(TextDescMap::hashKey), 0, 0, HASH_UNIQUE);
 
   pthread_mutex_init(&iconvMapHashMutex,MY_MUTEX_INIT_FAST);
   my_hash_init(&iconvMapHash, &my_charset_bin, 10, offsetof(IconvMap, hashKey), sizeof(IconvMap::hashKey), 0, 0, HASH_UNIQUE);
+ 
+  DBUG_PRINT("initCharsetSupport",  ("hashes initialized"));
 
   init_alloc_root(&textDescMapMemroot, "ibmdb2i", 2048, 0, MYF(0));
   init_alloc_root(&iconvMapMemroot, "ibmdb2i", 256, 0, MYF(0));
@@ -173,6 +179,7 @@ int32 initCharsetSupport()
   
   DBUG_RETURN(0);
 }
+
 
 /**
   Cleanup the static structures used by this module.
