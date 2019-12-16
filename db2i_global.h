@@ -75,20 +75,20 @@ OF SUCH DAMAGE.
  * gcc anonymous memcpy appears to link incorrect.
  * Explicit link to correct memcpy signature in libc.a.
  */
-EXTERN void *___memchr(const void *, int , size_t );
-EXTERN void *___memcpy(void *, const void *, size_t );
-EXTERN void *___memmove(void *, const void *, size_t );
-EXTERN int   ___memcmp(const void *, const void *, size_t );
-EXTERN void *___memset(void *, int , size_t );
-EXTERN void *___memccpy(void *, const void *, int , size_t );
-EXTERN char *___strstr(const char *, const char *);
-#define memchr(a,b,c) ___memchr(a,b,c)
-#define memcpy(a,b,c) ___memcpy(a,b,c)
-#define memmove(a,b,c) ___memmove(a,b,c)
-#define memcmp(a,b,c) ___memcmp(a,b,c)
-#define memset(a,b,c) ___memset(a,b,c)
-#define memccpy(a,b,c) ___memccpy(a,b,c)
-#define strstr(a,b) ___strstr(a,b)
+// EXTERN void *___memchr(const void *, int , size_t );
+// EXTERN void *___memcpy(void *, const void *, size_t );
+// EXTERN void *___memmove(void *, const void *, size_t );
+// EXTERN int   ___memcmp(const void *, const void *, size_t );
+// EXTERN void *___memset(void *, int , size_t );
+// EXTERN void *___memccpy(void *, const void *, int , size_t );
+// EXTERN char *___strstr(const char *, const char *);
+// #define memchr(a,b,c) ___memchr(a,b,c)
+// #define memcpy(a,b,c) ___memcpy(a,b,c)
+// #define memmove(a,b,c) ___memmove(a,b,c)
+// #define memcmp(a,b,c) ___memcmp(a,b,c)
+// #define memset(a,b,c) ___memset(a,b,c)
+// #define memccpy(a,b,c) ___memccpy(a,b,c)
+// #define strstr(a,b) ___strstr(a,b)
 
 #define db2i_beint16_from_ptr2leint16(V,M) \
   do { int16 def_temp;\
