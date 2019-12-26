@@ -3622,7 +3622,7 @@ char* ha_ibmdb2i::getCharacterConversionBuffer(int fieldId, int length)
   if (unlikely(!alloc_root_inited(&conversionBufferMemroot)))
       init_alloc_root(&conversionBufferMemroot, "ibmdb2i", 8192, 0, MYF(0));
     
-  return (char*)alloc_root(&conversionBufferMemroot, length);;
+  return (char*)alloc_root(&conversionBufferMemroot, length);
 }      
       
 void ha_ibmdb2i::resetCharacterConversionBuffers()
