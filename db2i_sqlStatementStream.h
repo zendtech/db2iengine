@@ -96,7 +96,7 @@ class SqlStatementStream
 
     uint32 curSize; // The size of the usable memory.
     char* allocBase; // The allocated memory (with padding for aligment)
-    char* block; // The usable memory chunck (aligned for ILE)
+    char* block __attribute__((aligned(16))); // The usable memory chunck (aligned for ILE)
     char* ptr; // The current position within block.
     uint32 statements; // The number of statements that have been appended.
 };
