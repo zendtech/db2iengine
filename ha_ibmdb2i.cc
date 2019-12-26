@@ -120,7 +120,7 @@ static MYSQL_SYSVAR_STR(rdb_name, ibmdb2i_rdb_name,
 // MYSQL_SYSVAR_BOOL(name, varname, opt, comment, check, update, def)
 // MYSQL_SYSVAR_UINT(name, varname, opt, comment, check, update, def, min, max, blk)
 // static my_bool ibmdb2i_assume_exclusive_use;
-static uint32 ibmdb2i_assume_exclusive_use;
+static uint32 ibmdb2i_assume_exclusive_use __attribute__((aligned(16)));
 static MYSQL_SYSVAR_UINT(
   assume_exclusive_use,
   ibmdb2i_assume_exclusive_use,
@@ -134,7 +134,7 @@ static MYSQL_SYSVAR_UINT(
   0
 );
 
-static uint32 ibmdb2i_system_trace;
+static uint32 ibmdb2i_system_trace  __attribute__((aligned(16)));
 static MYSQL_SYSVAR_UINT(system_trace_level, ibmdb2i_system_trace,
   0,
   "Set system tracing level",
