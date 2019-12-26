@@ -176,7 +176,7 @@ void db2i_ileBridge::unregisterPtr(ILEMemHandle handle)
 
 #ifndef DBUG_OFF
   DBUG_PRINT("db2i_ileBridge::unregisterPtr",("Unregister handle %d", (uint32)handle));
-  getBridgeForThread()->registeredPtrs++; //TODO: investigate why thread-specific one doesn't work on plugin install
+  getBridgeForThread()->registeredPtrs--; //TODO: investigate why thread-specific one doesn't work on plugin install
 #endif  
 }
 
