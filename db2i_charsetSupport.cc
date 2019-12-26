@@ -172,8 +172,8 @@ int32 initCharsetSupport()
  
   DBUG_PRINT("initCharsetSupport",  ("hashes initialized"));
 
-  init_alloc_root(&textDescMapMemroot, "ibmdb2i", 2048, 0, MYF(0));
-  init_alloc_root(&iconvMapMemroot, "ibmdb2i", 256, 0, MYF(0));
+  init_alloc_root(&textDescMapMemroot, "ibmdb2i", 2048 + ALLOC_ROOT_MIN_BLOCK_SIZE, 0, MYF(0));
+  init_alloc_root(&iconvMapMemroot, "ibmdb2i", 256 + ALLOC_ROOT_MIN_BLOCK_SIZE, 0, MYF(0));
 
   initMyconv();
   

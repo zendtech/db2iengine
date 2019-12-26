@@ -92,7 +92,7 @@ static MEM_ROOT dmapMemRoot;
 
 EXTERN void initMyconv()
 {
-  init_alloc_root(&dmapMemRoot, "ibmdb2i", 0x200, 0, MYF(0));
+  init_alloc_root(&dmapMemRoot, "ibmdb2i", 0x200 + ALLOC_ROOT_MIN_BLOCK_SIZE, 0, MYF(0));
 }
 
 EXTERN void cleanupMyconv()
