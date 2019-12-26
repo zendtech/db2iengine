@@ -664,7 +664,7 @@ ha_ibmdb2i::ha_ibmdb2i(handlerton *hton, TABLE_SHARE *table_arg) :
   activeReadBuf(NULL),
   activeWriteBuf(NULL),
   blobReadBuffers(NULL),
-  // blobWriteBuffers,
+  blobWriteBuffers(NULL),
   last_rnd_init_rc(0),
   last_index_init_rc(0),
   last_start_bulk_insert_rc(0),
