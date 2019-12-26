@@ -39,6 +39,12 @@ OF SUCH DAMAGE.
 
 #define MYSQL_SERVER 1
 #include <my_global.h>
+#if defined( __GNUC__ )
+    long double align __attribute__((aligned(16))); /* force gcc align quadword */
+#else
+    long double		align;	/* Force xlc quadword alignment
+				   (with -qldbl128 -qalign=natural) */
+#endif
 // #include <memory.h>
 // #include <pthread/bits/stdc++.h>
 #include <sys/time.h>
