@@ -111,7 +111,7 @@ public:
   */
   static db2i_ileBridge* getBridgeForThread()
   {
-    THD* thd = current_thd;
+    THD* thd = thd_get_current_thd(); //switched from current_thd because of when we are invoked from a non-connection thread during init
     if (likely(thd))  
       return getBridgeForThread(thd);
 
