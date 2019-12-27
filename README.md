@@ -3,13 +3,13 @@ MariaDB IBM i DB2 storage engine.
 
 version
 ```
-1.0.1
+1.0.2 (in development)
 ```
 
 copy source
 ```
 > mkdir -p storage/ibmdb2i/special
-> unzip maria_ibmdb2i-1.0.1.zip
+> unzip maria_ibmdb2i-1.0.2.zip
 Note:
 Use storage/ibmdb2i, not storage/ibmidb2i (Dave)
 ```
