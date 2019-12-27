@@ -219,7 +219,7 @@ void getErrTxt(int errCode, ...)
     msg = engineErrors[errCode - DB2I_FIRST_ERR];
   }
   
-  (void) my_vsnprintf (buffer, MYSQL_ERRMSG_SIZE, msg, args);
+  vsnprintf (buffer, MYSQL_ERRMSG_SIZE, msg, args);
   va_end(args);
   fprintf(stderr,"ibmdb2i error %d: %s\n",errCode,buffer);
   DBUG_PRINT("error", ("ibmdb2i error %d: %s",errCode,buffer));
@@ -292,7 +292,7 @@ void warning(THD *thd, int errCode, ...)
   DBUG_ASSERT(errCode >= DB2I_FIRST_ERR && errCode <= DB2I_LAST_ERR);
   msg = engineErrors[errCode - DB2I_FIRST_ERR];
   
-  (void) my_vsnprintf (buffer, MYSQL_ERRMSG_SIZE, msg, args);
+  vsnprintf (buffer, MYSQL_ERRMSG_SIZE, msg, args);
   va_end(args);
   DBUG_PRINT("warning", ("ibmdb2i warning %d: %s",errCode,buffer));
   push_warning(thd, Sql_condition::WARN_LEVEL_WARN, errCode, buffer);
