@@ -43,7 +43,7 @@
 #ifndef QMYSE_h                                                                 
 #define QMYSE_h                                                                 
                                                                                 
-#ifdef __OS400__                    /* If ILE                        */         
+#if defined(__OS400__)                 /* If ILE                        */         
  #ifndef __pointer_h                /* If pointers not declared      */         
   #include <pointer.h>              /* Define pointer types          */         
 #endif                              /* End ILE                       */         
@@ -56,8 +56,9 @@
   extern "C" {                                                                  
 #endif                                                                          
                                                                                 
-#ifdef __OS400__                                                                
-  #pragma pack(1)                                                               
+#if defined(__OS400__) || defined(__PASE__)                                                                
+  #pragma pack(push)         //TODO: see if this is OK for OS400, probably not                           
+  #pragma pack(1)         //TODO: see if this is OK for OS400, probably not                                                      
 #else                                                                           
   #pragma options align=packed                                                  
 #endif /* __OS400__ */                                                          
@@ -65,7 +66,7 @@
 /*********************************************************************/         
 /* APIs                                                              */         
 /*********************************************************************/         
-#ifdef __OS400__                                                                
+#if defined(__OS400__)                                                             
 #ifdef __ILEC400__                                                              
 #pragma linkage(QmyRegisterParameterSpaces,OS,nowiden)                          
 #else                                                                           
@@ -1380,7 +1381,7 @@ typedef struct Qmy_MWRT0100_output {
 } Qmy_MWRT0100_output_t;                                                        
                                                                                 
                                                                                 
-#ifdef __OS400__                                                                
+#if defined(__OS400__) || defined(__PASE__)                                                               
   #pragma pack(pop)                                                             
 #else                                                                           
   #pragma options align=reset                                                   
