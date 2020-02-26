@@ -3,47 +3,17 @@ MariaDB IBM i DB2 storage engine.
 
 version
 ```
-1.0.1
+1.1.0
 ```
-
-copy source
-```
-> mkdir -p storage/ibmdb2i/special
-> unzip maria_ibmdb2i-1.0.1.zip
-Note:
-Use storage/ibmdb2i, not storage/ibmidb2i (Dave)
-```
-
-Fix-up for gcc 4.8.3
-```
-> cd storage/ibmdb2i/special
-> chmod +x zzcpy2gccfixed.sh
-> ./zzcpy2gccfixed.sh
-```
-
-mariadb build (subset myisam only)
-```
-> cd /usr/src/zenddbi
-> chmod +x build-tony.sh
-> ./build-tony.sh (tony subset)
--- or --
-> ./build-zenddbi.sh (zend)
-Note:
-add -malign-power -malign-natural (Dave) 
-Our power engine will run better. 
-Also fewer gcc odd boundary over runs.
-```
-
 
 start
 ```
-> cd /usr/local/mariadb
-> ./bin/mysqld_safe& 
+/QOpenSys/pkgs/sbin/mysqld & 
 ```
 
 setup
 ```
-$ bin/mysql -u root -p
+$ /QOpenSys/pkgs/bin/mysql -u root -p
 Enter password: 
 Welcome to the MariaDB monitor.  Commands end with ; or \g.
 MariaDB [(none)]> create database ranger;
@@ -55,7 +25,7 @@ MariaDB [(none)]> select host, user, password from mysql.user;
 
 test
 ```
-> bin/mysql -u ranger -p
+$ /QOpenSys/pkgs/bin/mysql -u ranger -p
 > use ranger
 
 MariaDB [ranger]> CREATE TABLE itiny (i tinyint, u tinyint unsigned) engine=ibmdb2i;
