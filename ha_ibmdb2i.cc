@@ -41,7 +41,7 @@ OF SUCH DAMAGE.
   The ha_ibmdb2i storage engine provides an interface from MySQL to IBM DB2 for i.
 
 */
-
+#define NDEBUG
 #ifdef USE_PRAGMA_IMPLEMENTATION
 #pragma implementation				// gcc: Class implementation
 #endif
@@ -51,11 +51,12 @@ OF SUCH DAMAGE.
 #include "sql_priv.h"
 #include "key.h"                                // key_copy
 #include "ha_ibmdb2i.h"
-#include <mysql/plugin.h>
+//#include <mysql/plugin.h>
 #include "db2i_ileBridge.h"
 #include "db2i_charsetSupport.h"
 #include <sys/utsname.h>
 #include "db2i_safeString.h"
+
 
 static const char __NOT_NULL_VALUE_EBCDIC = 0xF0; // '0'
 static const char __NULL_VALUE_EBCDIC = 0xF1; // '1'
@@ -382,7 +383,8 @@ static int ibmdb2i_init_func(void *p)
 
   DBUG_PRINT("ibmdb2i_init_func",("(adc) leaving"));      
   
-  DBUG_RETURN(rc);
+  //DBUG_RETURN(rc);
+  return rc;
 }
 
 
@@ -3827,28 +3829,8 @@ void ha_ibmdb2i::generateAndAppendRCDFMT(const char* tableName, String& query)
 // plugin definition
 // note: ibmdb2i
 // zenddbi/storage/ibmdb2i
-
 struct st_mysql_storage_engine ibmdb2i_storage_engine=
 { MYSQL_HANDLERTON_INTERFACE_VERSION };
-
-mysql_declare_plugin(ibmdb2i)
-{
-  MYSQL_STORAGE_ENGINE_PLUGIN,
-  &ibmdb2i_storage_engine,
-  ibmdb2i_hton_name,
-  "The IBM development team in Rochester, Minnesota",
-  "IBM DB2 for i Storage Engine",
-  PLUGIN_LICENSE_GPL,
-  ibmdb2i_init_func,                            /* Plugin Init */
-  ibmdb2i_done_func,                            /* Plugin Deinit */
-  0x0100 /* 1.0 */,
-  NULL,                                         /* status variables */
-  ibmdb2i_system_variables,                       /* system variables */
-  NULL,                                         /* config options */
-  0,                          /* flags                           */
-}
-mysql_declare_plugin_end;
-
 maria_declare_plugin(ibmdb2i)
 {
   MYSQL_STORAGE_ENGINE_PLUGIN,
@@ -3859,10 +3841,10 @@ maria_declare_plugin(ibmdb2i)
   PLUGIN_LICENSE_GPL,
   ibmdb2i_init_func,
   ibmdb2i_done_func,
-  0x0100,
+  0x0102,
   NULL,
   ibmdb2i_system_variables,
-  "1.0",
+  "1.2",
   MariaDB_PLUGIN_MATURITY_STABLE
 }
 maria_declare_plugin_end;

@@ -48,7 +48,7 @@ OF SUCH DAMAGE.
 
 #include <as400_types.h>
 #include <as400_protos.h>
-#include <mysql/plugin.h>
+//#include <mysql/plugin.h>
 #include "db2i_global.h"
 #include "db2i_ileBridge.h"
 /* #include "builtins.h" */
@@ -61,6 +61,23 @@ OF SUCH DAMAGE.
 #include "db2i_errors.h"
 #include "db2i_sqlStatementStream.h"
 
+
+#define MYSQL_VERSION_MAJOR 10
+#define MYSQL_VERSION_MINOR 1
+#define MYSQL_VERSION_PATCH 21
+#define MYSQL_VERSION_EXTRA ""
+
+#define PACKAGE "mysql"
+#define PACKAGE_BUGREPORT ""
+#define PACKAGE_NAME "MySQL Server"
+#define PACKAGE_STRING "MySQL Server 10.1.21"
+#define PACKAGE_TARNAME "mysql"
+#define PACKAGE_VERSION "10.1.21"
+#define VERSION "10.1.21"
+#define PROTOCOL_VERSION 10
+
+#undef HAVE_ATTRIBUTE_CLEANUP 
+#define DBUG_PRINT(keyword,arglist)     do { } while(0)
 /** @brief
   IBMDB2I_SHARE is a structure that will be shared among all open handlers.
   It is used to describe the underlying table definition, and it caches
