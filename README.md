@@ -3,13 +3,13 @@ MariaDB IBM i DB2 storage engine.
 
 version
 ```
-1.0.2 (in development)
+1.0.3 (in development)
 ```
 
 copy source
 ```
 > mkdir -p storage/ibmdb2i/special
-> unzip maria_ibmdb2i-1.0.2.zip
+> unzip maria_ibmdb2i-1.0.3.zip
 Note:
 Use storage/ibmdb2i, not storage/ibmidb2i (Dave)
 ```
@@ -20,6 +20,11 @@ Fix-up for gcc 4.8.3
 > chmod +x zzcpy2gccfixed.sh
 > ./zzcpy2gccfixed.sh
 ```
+Fixup for gcc 6.3 from IBM yum repo
+cd storage/ibmdb2i/special
+cp /usr/include/unistd.h
+cp /QIBM/include/qmyse.h
+
 
 mariadb build (subset myisam only)
 ```

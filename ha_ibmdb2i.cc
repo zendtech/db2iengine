@@ -3845,7 +3845,7 @@ maria_declare_plugin(ibmdb2i)
   0x0102,
   NULL,
   ibmdb2i_system_variables,
-  "1.0.2",
+  "1.0.3",
   MariaDB_PLUGIN_MATURITY_STABLE
 }
 maria_declare_plugin_end;
