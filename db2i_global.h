@@ -57,7 +57,7 @@ OF SUCH DAMAGE.
 #include "sql_show.h"
 #include "sql_table.h"
 #include "sql_class.h"
-
+#include "my_dbug.h"
 #ifdef __cplusplus
 #define EXTERN  extern "C"
 #else
@@ -76,6 +76,7 @@ OF SUCH DAMAGE.
  * gcc anonymous memcpy appears to link incorrect.
  * Explicit link to correct memcpy signature in libc.a.
  */
+/*
 EXTERN void *___memchr(const void *, int , size_t );
 EXTERN void *___memcpy(void *, const void *, size_t );
 EXTERN void *___memmove(void *, const void *, size_t );
@@ -90,7 +91,7 @@ EXTERN char *___strstr(const char *, const char *);
 #define memset(a,b,c) ___memset(a,b,c)
 #define memccpy(a,b,c) ___memccpy(a,b,c)
 #define strstr(a,b) ___strstr(a,b)
-
+*/
 #define db2i_beint16_from_ptr2leint16(V,M) \
   do { int16 def_temp;\
        ((uchar*) &def_temp)[0]=(M)[1];\

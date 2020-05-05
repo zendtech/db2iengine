@@ -383,6 +383,7 @@ static int ibmdb2i_init_func(void *p)
 
   DBUG_PRINT("ibmdb2i_init_func",("(adc) leaving"));      
   
+  //David Lowes - disable debug return to prevent crash until fix found
   //DBUG_RETURN(rc);
   return rc;
 }
@@ -3844,7 +3845,7 @@ maria_declare_plugin(ibmdb2i)
   0x0102,
   NULL,
   ibmdb2i_system_variables,
-  "1.2",
+  "1.0.2",
   MariaDB_PLUGIN_MATURITY_STABLE
 }
 maria_declare_plugin_end;

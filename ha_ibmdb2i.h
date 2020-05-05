@@ -61,7 +61,7 @@ OF SUCH DAMAGE.
 #include "db2i_errors.h"
 #include "db2i_sqlStatementStream.h"
 
-
+//David Lowes - Temporarily exclude mysql/plugin.h and manually define used constants
 #define MYSQL_VERSION_MAJOR 10
 #define MYSQL_VERSION_MINOR 1
 #define MYSQL_VERSION_PATCH 21
@@ -77,6 +77,7 @@ OF SUCH DAMAGE.
 #define PROTOCOL_VERSION 10
 
 #undef HAVE_ATTRIBUTE_CLEANUP 
+//David Lowes - temporarily disable DBUG_PRINT to prevent crashes
 #define DBUG_PRINT(keyword,arglist)     do { } while(0)
 /** @brief
   IBMDB2I_SHARE is a structure that will be shared among all open handlers.
