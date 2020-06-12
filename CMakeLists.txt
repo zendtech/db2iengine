@@ -1,10 +1,6 @@
 cmake_minimum_required (VERSION 2.8.0)
 project (ibmdb2i)
-# Dave add -malign-power -malign-natural (below)
-# Our power engine will run better. Also fewer gcc odd boundary over runs.
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ggdb -O0")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -malign-power -malign-natural -ggdb -O0")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -malign-power -malign-natural -ggdb -O0")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-brtl,-lc,-blibpath:/QOpenSys/pkgs/lib:/QOpenSys/usr/lib:/usr/lib,-bbigtoc,-lpthread,-liconv")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-brtl,-lc,-blibpath:/QOpenSys/pkgs/lib:/QOpenSys/usr/lib:/usr/lib,-bbigtoc,-lpthread,-liconv")
 set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,-brtl,-lc,-blibpath:/QOpenSys/pkgs/lib:/QOpenSys/usr/lib:/usr/lib,-bbigtoc,-lpthread,-liconv")
@@ -52,3 +48,6 @@ MYSQL_ADD_PLUGIN(ibmdb2i ${IBMDB2I_SOURCES}
  STORAGE_ENGINE MODULE_ONLY
  LINK_LIBRARIES ${PASELIB_LIBRARIES} mysys sql)
 
+# Dave add -malign-power -malign-natural (below)
+# Our power engine will run better. Also fewer gcc odd boundary over runs.
+target_compile_options(ibmdb2i PRIVATE -malign-power -malign-natural -ggdb -O0)
