@@ -1,6 +1,5 @@
 cmake_minimum_required (VERSION 2.8.0)
 project (ibmdb2i)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ggdb -O0")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-brtl,-lc,-blibpath:/QOpenSys/pkgs/lib:/QOpenSys/usr/lib:/usr/lib,-bbigtoc,-lpthread,-liconv")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-brtl,-lc,-blibpath:/QOpenSys/pkgs/lib:/QOpenSys/usr/lib:/usr/lib,-bbigtoc,-lpthread,-liconv")
 set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,-brtl,-lc,-blibpath:/QOpenSys/pkgs/lib:/QOpenSys/usr/lib:/usr/lib,-bbigtoc,-lpthread,-liconv")
