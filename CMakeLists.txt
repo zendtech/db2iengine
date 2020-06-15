@@ -45,7 +45,7 @@ set(PASELIB_LIBRARIES
 # -- INSTALL SONAME 'ha_ibmdb2i';
 MYSQL_ADD_PLUGIN(ibmdb2i ${IBMDB2I_SOURCES} 
  STORAGE_ENGINE MODULE_ONLY
- LINK_LIBRARIES ${PASELIB_LIBRARIES} mysys sql)
+ LINK_LIBRARIES ${PASELIB_LIBRARIES})
 
 # Dave add -malign-power -malign-natural (below)
 # Our power engine will run better. Also fewer gcc odd boundary over runs.
