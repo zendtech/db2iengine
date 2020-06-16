@@ -33,7 +33,7 @@ MariaDB [ranger]> insert into itiny (i,u) values(127,255);
 MariaDB [ranger]> select * from itiny; 
 
 MariaDB [ranger]> CREATE TABLE ismall (i smallint, u smallint unsigned) engine=ibmdb2i;
-MariaDB [ranger]> insert into itiny (i,u) values(32767,65535);
+MariaDB [ranger]> insert into ismall (i,u) values(32767,65535);
 MariaDB [ranger]> select * from ismall; 
 
 MariaDB [ranger]> CREATE TABLE imedium (i mediumint, u mediumint unsigned) engine=ibmdb2i;
@@ -45,11 +45,11 @@ MariaDB [ranger]> insert into ibig (i,u) values(9223372036854775807,184467440737
 MariaDB [ranger]> select * from ibig;
 
 MariaDB [ranger]> CREATE TABLE ipack (i decimal(10,2), u decimal(10,2) unsigned) engine=ibmdb2i;
-MariaDB [ranger]> insert into ibig (i,u) values(12345678.91,12345678.91);
+MariaDB [ranger]> insert into ipack (i,u) values(12345678.91,12345678.91);
 MariaDB [ranger]> select * from ipack;
 
 MariaDB [ranger]> CREATE TABLE inum (i numeric(10,2), u numeric(10,2) unsigned) engine=ibmdb2i;
-MariaDB [ranger]> insert into inum (i,u) values(-99999999.99,-99999999.99);
+MariaDB [ranger]> insert into inum (i,u) values(-99999999.99,99999999.99);
 MariaDB [ranger]> select * from inum;
 
 MariaDB [ranger]> CREATE TABLE ifloat (i float) engine=ibmdb2i;
@@ -95,7 +95,7 @@ MariaDB [ranger]> insert into ilongtext (i) values('ABC');
 MariaDB [ranger]> insert into ilongtext (i) values('12345678901234567890123456789012345678901234567890');
 MariaDB [ranger]> select * from ilongtext;
 
-MariaDB [ranger]> CREATE TABLE itinyblob (i tinyblob) engine=ibmdb2i
+MariaDB [ranger]> CREATE TABLE itinyblob (i tinyblob) engine=ibmdb2i;
 MariaDB [ranger]> insert into itinyblob (i) values(x'DEADBEEF');
 MariaDB [ranger]> insert into itinyblob (i) values('ABC');
 MariaDB [ranger]> select HEX(i) from itinyblob;
@@ -106,11 +106,11 @@ MariaDB [ranger]> insert into imediumblob (i) values(x'BADC0FFEE0DDF00D');
 MariaDB [ranger]> insert into imediumblob (i) values('ABC');
 MariaDB [ranger]> select HEX(i) from imediumblob;
 
-MariaDB [ranger]> CREATE TABLE ilongblob (i longblob) engine=ibmdb2i
+MariaDB [ranger]> CREATE TABLE ilongblob (i longblob) engine=ibmdb2i;
 MariaDB [ranger]> insert into ilongblob (i) values('ABC');
 MariaDB [ranger]> insert into ilongblob (i) values(x'BADC0FFEE0DDF00D');
 MariaDB [ranger]> insert into ilongblob (i) values(x'DEADBEEF');
-MariaDB [ranger]> select HEX(i) from ilongblob
+MariaDB [ranger]> select HEX(i) from ilongblob;
 
 MariaDB [ranger]> CREATE TABLE iblob (i blob) engine=ibmdb2i;
 MariaDB [ranger]> insert into iblob (i) values('ABC');
@@ -124,8 +124,8 @@ MariaDB [ranger]> insert into ibool (i) values(FALSE);
 MariaDB [ranger]> select * from ibool;
 
 MariaDB [ranger]> CREATE TABLE ibin (i binary(10)) engine=ibmdb2i;
-MariaDB [ranger]> insert into ibin (i) values('12345678901');
-MariaDB [ranger]> insert into ibin (i) values(xDEADBEEF);
+MariaDB [ranger]> insert into ibin (i) values('1234567890');
+MariaDB [ranger]> insert into ibin (i) values(x'DEADBEEF');
 MariaDB [ranger]> insert into ibin (i) values(x'BADC0FFEE0DDF00D');
 MariaDB [ranger]> select HEX(i) from ibin;
 
@@ -149,9 +149,9 @@ MariaDB [ranger]> insert into itime (i) values('9:6:3');
 MariaDB [ranger]> insert into itime (i) values(151413);
 MariaDB [ranger]> select * from itime;
 
-MariaDB [ranger]> CREATE TABLE iyear (i year) engine=ibmdb2i
+MariaDB [ranger]> CREATE TABLE iyear (i year) engine=ibmdb2i;
 MariaDB [ranger]> insert into iyear (i) values(1990);
-MariaDB [ranger]> insert into iyear (i) values('2012')
+MariaDB [ranger]> insert into iyear (i) values('2012');
 MariaDB [ranger]> select * from iyear;
 
 MariaDB [ranger]> CREATE TABLE idatetime (i datetime) engine=ibmdb2i;
