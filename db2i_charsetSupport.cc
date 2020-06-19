@@ -40,6 +40,65 @@ OF SUCH DAMAGE.
 #include "db2i_errors.h"
 #include "hash.h"
 
+struct EncodingMapEntry {
+  const char* csname;
+  const char* iconv_mariadb;
+  const char* iconv_db2;
+  unsigned short db2_ccsid;
+};
+
+// single byte is ebcdic single byte
+// multibyte is UTF-16
+// Here is the list of supported mariadb charsets
+// https://mariadb.com/kb/en/supported-character-sets-and-collations/
+static EncodingMapEntry encoding_map[] = {
+
+  {"utf8", "UTF-8", "UTF-8", 1208},
+  {"utf8mb4", "UTF-8", "UTF-8", 1208},
+  {"utf8mb3", "UTF-8", "UTF-8", 1208},
+  {"utf16", "UTF-16", "UTF-16", 1200},
+  {"ucs2", "UCS-2", "UCS-2", 13488},
+  {"ascii", "ISO8859-1", "IBM-1148", 1148}, // (US ASCII) use ISO8859-1?
+  {"latin1", "ISO8859-1", "IBM-1148", 1148}, // (cp1252 West European) AKA ISO8859-1
+  {"latin2", "ISO8859-2", "IBM-1153", 1153}, // (ISO 8859-2 Central European)
+  {"greek", "ISO8859-7", "IBM-4971", 4971}, // (ISO 8859-7 Greek) was 875
+  {"hebrew", "ISO8859-8", "IBM-424", 424}, // (ISO 8859-8 Hebrew)
+  {"latin5", "ISO8859-9", "IBM-1155", 1155}, // (ISO 8859-9 Turkish)
+  {"tis620", "TIS-620", "IBM-838", 838}, // (TIS620 Thai)
+
+  {"euckr", "EUC-KR", "UTF-16", 1200}, // (EUC-KR Korean)
+  {"gbk", "GBK", "UTF-16", 1200}, // (Simplified Chinese) found GBK_ct__64 & GBK_ct but unsure what ct means
+  {"gb2312", "GBK", "UTF-16", 1200}, // (Simplified Chinese) no converter found
+  {"sjis", "IBM-943", "UTF-16", 1200}, // (Shift-JIS Japanese) use IBM-943 ?
+  {"ujis", "EUC-JP", "UTF-16", 1200}, // (EUC-JP Japanese)
+  {"big5", "big5", "UTF-16", 1200}, // (Big5 Traditional Chinese)
+  {"cp1250", "IBM-1250", "IBM-1153", 1153}, // (Windows Central European)
+  {"cp1251", "IBM-1251", "IBM-1154", 1154}, // (Windows Cyrillic)
+  {"cp850", "IBM-850", "IBM-1148", 1148}, // (DOS West European)
+  {"cp852", "IBM-852", "IBM-1153", 1153}, // (DOS Central European)
+  {"cp1256", "IBM-1256", "IBM-420", 420}, // (Windows Arabic)
+  {"cp932", "IBM-943", "UTF-16", 1200}, // (SJIS for Windows Japanese)
+  {"macce", "IBM-1282", "IBM-1153", 1153}, // (Mac Central European)
+
+  // There are no iconv converter tables for the following charsets:
+  // {"armscii8", "", "", }, // (ARMSCII-8 Armenian)
+  // {"cp866", "", "", }, // (DOS Russian)
+  // {"cp1257", "", "", }, // (Windows Baltic)
+  // {"dec8", "", "", }, // (DEC Western European)
+  // {"eucjpms", "", "",}, // (UJIS for Windows Japanese)
+  // {"geostd8", "", "", }, // (Georgian)
+  // {"hp8", "", "", }, // (IBM-1050)
+  // {"koi8r", "", "", }, // (8-bit Russian)
+  // {"latin7", "", "", }, // (ISO 8859-13 Baltic)
+  // {"koi8u", "", "", }, // (8 bit Ukrainian)
+  // {"keybcs2", "", "", }, // (DOS Kamenicky Czech-Slovak)
+  // {"macroman", "", "",}, // (Mac West European)
+  // {"swe7", "", "", }, // (7bit Swedish)
+  // {"binary", "", "", }, (Binary pseudo charset) not needed
+  // {"utf16le", "", "", },
+  // {"utf32", "", "", },
+};
+
 /*
   The following arrays define a mapping between IANA-style text descriptors and
   IBM i CCSID text descriptors. The mapping is a 1-to-1 correlation between
@@ -99,7 +158,7 @@ static const char ccsidType[MAX_IANASTRING][6] =
     {"1208"}  //utf8
 };
 
-static _ILEpointer *QlgCvtTextDescToDesc_sym;
+// static _ILEpointer *QlgCvtTextDescToDesc_sym;
 
 /* We keep a cache of the mapping for text descriptions obtained via
    QlgTextDescToDesc. The following structures implement this cache. */
@@ -146,24 +205,6 @@ int32 initCharsetSupport()
 {
   DBUG_ENTER("initCharsetSupport");
 
-  int actmark = _ILELOAD("QSYS/QLGUSR", ILELOAD_LIBOBJ);
-  if ( actmark == -1 )
-  {
-    DBUG_PRINT("initCharsetSupport", ("conversion srvpgm activation failed"));
-    DBUG_RETURN(1);
-  }
-  
-  DBUG_PRINT("initCharsetSupport", ("conversion srvpgm activation succeeded"));
-  QlgCvtTextDescToDesc_sym = (ILEpointer*)malloc_aligned(sizeof(ILEpointer));
-  DBUG_PRINT("initCharsetSupport", ("allocated ILE pointer"));
-  if (_ILESYM(QlgCvtTextDescToDesc_sym, actmark, "QlgCvtTextDescToDesc") == -1)
-  {
-    DBUG_PRINT("initCharsetSupport", 
-        ("resolve of QlgCvtTextDescToDesc failed"));
-    DBUG_RETURN(errno);
-  }
-  DBUG_PRINT("initCharsetSupport",  ("resolve of QlgCvtTextDescToDesc succeeded"));
-
   pthread_mutex_init(&textDescMapHashMutex,MY_MUTEX_INIT_FAST);
   my_hash_init(&textDescMapHash, &my_charset_bin, 10, offsetof(TextDescMap, hashKey), sizeof(TextDescMap::hashKey), 0, 0, HASH_UNIQUE);
 
@@ -175,7 +216,7 @@ int32 initCharsetSupport()
   init_alloc_root(&textDescMapMemroot, "ibmdb2i", 2048 + ALLOC_ROOT_MIN_BLOCK_SIZE, 0, MYF(0));
   init_alloc_root(&iconvMapMemroot, "ibmdb2i", 256 + ALLOC_ROOT_MIN_BLOCK_SIZE, 0, MYF(0));
 
-  initMyconv();
+  // initMyconv();
   
   DBUG_RETURN(0);
 }
@@ -189,7 +230,7 @@ int32 initCharsetSupport()
 */
 void doneCharsetSupport()
 {
-  cleanupMyconv();
+  // cleanupMyconv();
     
   free_root(&textDescMapMemroot, 0);
   free_root(&iconvMapMemroot, 0);
@@ -198,314 +239,17 @@ void doneCharsetSupport()
   my_hash_free(&textDescMapHash);
   pthread_mutex_destroy(&iconvMapHashMutex);
   my_hash_free(&iconvMapHash);
-  free_aligned(QlgCvtTextDescToDesc_sym);
 }
 
-
-/**
-  Convert a text description from one type to another.
-  
-  This function is just a wrapper for the IBM i QlgTextDescToDesc function plus
-  some overrides for conversions that the API does not handle correctly and 
-  support for caching the computed conversion.
-    
-  @param inType  The type of descriptor pointed to by "in".
-  @param outType  The type of descriptor requested for "out".
-  @param in  The descriptor to be convereted.
-  @param[out] out  The equivalent descriptor
-  @param hashKey  The hash key to be used for caching the conversion result.
-    
-  @return  0 if successful. Failure otherwise
-*/
-static int32 getNewTextDesc(const int32 inType, 
-                            const int32 outType, 
-                            const char* in, 
-                            char* out,
-                            const TextDescMap::HashKey* hashKey)
-{
-  DBUG_ENTER("db2i_charsetSupport::getNewTextDesc");
-  const arg_type_t signature[] = { ARG_INT32, ARG_INT32, ARG_MEMPTR, ARG_INT32, ARG_MEMPTR, ARG_INT32, ARG_INT32, ARG_END };
-  struct ArgList
-  {
-    ILEarglist_base base;
-    int32 CRDIInType;
-    int32 CRDIOutType;
-    ILEpointer CRDIDesc;
-    int32 CRDIDescSize;
-    ILEpointer CRDODesc;
-    int32 CRDODescSize;
-    int32 CTDCCSID;
-  } *arguments;
-
-  if ((inType == Qlg_TypeIANA) && (outType == Qlg_TypeAix41))
-  {
-    // Override non-standard charsets
-    if (unlikely(strcmp("IBM1381", in) == 0))
-    {
-      strcpy(out, "IBM-1381");
-      DBUG_RETURN(0);
+int32 convertMyCharsetToDb2Ccsid(const CHARSET_INFO* charset_info) {
+  for (auto& entry : encoding_map) {
+    if(strcmp(entry.csname, charset_info->csname) == 0){
+      return entry.db2_ccsid;
     }
   }
-  else if ((inType == Qlg_TypeAS400CCSID) && (outType == Qlg_TypeAix41))
-  {
-    // Override non-standard charsets
-    if (strcmp("1148", in) == 0)
-    {
-      strcpy(out, "IBM-1148");
-      DBUG_RETURN(0);
-    }
-    else if (unlikely(strcmp("1153", in) == 0))
-    {
-      strcpy(out, "IBM-1153");
-      DBUG_RETURN(0);
-    }
-  }
-
-  char argBuf[sizeof(ArgList)+15];
-  arguments = (ArgList*)roundToQuadWordBdy(argBuf);
-
-  arguments->CRDIInType = inType;
-  arguments->CRDIOutType = outType;
-  arguments->CRDIDesc.s.addr = (address64_t) in;
-  arguments->CRDIDescSize = Qlg_MaxDescSize;
-  arguments->CRDODesc.s.addr = (address64_t) out;
-  arguments->CRDODescSize = Qlg_MaxDescSize;
-  arguments->CTDCCSID = 819;
-  _ILECALL(QlgCvtTextDescToDesc_sym, 
-      &arguments->base,
-      signature, 
-      RESULT_INT32);
-  if (unlikely(arguments->base.result.s_int32.r_int32 < 0))
-  {
-    if (arguments->base.result.s_int32.r_int32 == Qlg_InDescriptorNotFound)
-    {
-      DBUG_RETURN(DB2I_ERR_UNSUPP_CHARSET);
-    }
-    else
-    {
-      getErrTxt(DB2I_ERR_ILECALL,"QlgCvtTextDescToDesc",arguments->base.result.s_int32.r_int32);
-      DBUG_RETURN(DB2I_ERR_ILECALL);
-    }
-  }
-  
-  // Store the conversion information into a cache entry
-  TextDescMap* mapping = (TextDescMap*)alloc_root(&textDescMapMemroot, sizeof(TextDescMap));
-  if (unlikely(!mapping))
-    DBUG_RETURN(HA_ERR_OUT_OF_MEM);
-  memcpy(&(mapping->hashKey), hashKey, sizeof(*hashKey));
-  strcpy(mapping->outDesc, out);
-  pthread_mutex_lock(&textDescMapHashMutex);
-  my_hash_insert(&textDescMapHash, (const uchar*)mapping);
-  pthread_mutex_unlock(&textDescMapHashMutex);
-  
-  DBUG_RETURN(0);
-}
-
-
-/**
-  Convert a text description from one type to another.
-  
-  This function takes a text description in one representation and converts 
-  it into another representation. Although the OS provides some facilities for
-  doing this, the support is not complete, nor does MySQL always use standard
-  identifiers. Therefore, there are a lot of hardcoded overrides required.
-  There is probably some room for optimization here, but this should not be
-  called frequently under most circumstances.
-
-  @param inType  The type of descriptor pointed to by "in".
-  @param outType  The type of descriptor requested for "out".
-  @param in  The descriptor to be convereted.
-  @param[out] out  The equivalent descriptor
-    
-  @return  0 if successful. Failure otherwise
-*/
-static int32 convertTextDesc(const int32 inType, const int32 outType, const char* inDesc, char* outDesc)
-{
-  DBUG_ENTER("db2i_charsetSupport::convertTextDesc");
-  const char* inDescOverride;
-  
-  if (inType == Qlg_TypeIANA) 
-  {
-    // Override non-standard charsets
-    if (strcmp("big5", inDesc) == 0)
-      inDescOverride = "Big5";
-    else if (strcmp("cp932", inDesc) == 0)
-      inDescOverride = "IBM943";
-    else if (strcmp("euckr", inDesc) == 0)
-      inDescOverride = "EUC-KR";
-    else if (strcmp("gb2312", inDesc) == 0)
-      inDescOverride = "IBM1381";
-    else if (strcmp("gbk", inDesc) == 0)
-      inDescOverride = "IBM1386";
-    else if (strcmp("sjis", inDesc) == 0)
-      inDescOverride = "Shift_JIS";
-    else if (strcmp("ujis", inDesc) == 0)
-      inDescOverride = "EUC-JP";
-    else
-      inDescOverride = inDesc;
-     
-    // Hardcode non-standard charsets
-    if (outType == Qlg_TypeAix41) 
-    {
-      if (strcmp("Big5", inDescOverride) == 0)
-      {
-        strcpy(outDesc,"big5");
-        DBUG_RETURN(0);
-      }
-      else if (strcmp("IBM1386", inDescOverride) == 0)
-      {
-        strcpy(outDesc,"GBK");
-        DBUG_RETURN(0);
-      }
-      else if (strcmp("Shift_JIS", inDescOverride) == 0 ||
-               strcmp("IBM943", inDescOverride) == 0)
-      {
-        strcpy(outDesc,"IBM-943");
-        DBUG_RETURN(0);
-      }
-      else if (strcmp("tis620", inDescOverride) == 0)
-      {
-        strcpy(outDesc,"TIS-620");
-        DBUG_RETURN(0);
-      }
-      else if (strcmp("ucs2", inDescOverride) == 0)
-      {
-        strcpy(outDesc,"UCS-2");
-        DBUG_RETURN(0);
-      }
-      else if (strcmp("cp1250", inDescOverride) == 0)
-      {
-        strcpy(outDesc,"IBM-1250");
-        DBUG_RETURN(0);
-      }
-      else if (strcmp("cp1251", inDescOverride) == 0)
-      {
-        strcpy(outDesc,"IBM-1251");
-        DBUG_RETURN(0);
-      }
-      else if (strcmp("cp1256", inDescOverride) == 0)
-      {
-        strcpy(outDesc,"IBM-1256");
-        DBUG_RETURN(0);
-      }
-      else if (strcmp("macce", inDescOverride) == 0)
-      {
-        strcpy(outDesc,"IBM-1282");
-        DBUG_RETURN(0);
-      }
-    }
-    else if (outType == Qlg_TypeAS400CCSID)
-    {
-      // See if we can fast path the convert
-      for (int loopCnt = 0; loopCnt < MAX_IANASTRING; ++loopCnt)
-      {
-        if (strcmp((char*)ianaStringType[loopCnt],inDescOverride) == 0)
-        {
-          strcpy(outDesc,ccsidType[loopCnt]);
-          DBUG_RETURN(0);
-        }
-      }
-    }
-  }
-  else 
-    inDescOverride = inDesc;
-
-  // We call getNewTextDesc for all other conversions and cache the result.  
-  TextDescMap *mapping;
-  TextDescMap::HashKey hashKey;
-  hashKey.inType= inType;
-  hashKey.outType= outType;
-  uint32 len = strlen(inDescOverride);
-  memcpy(hashKey.inDesc, inDescOverride, len);
-  memset(hashKey.inDesc+len, 0, sizeof(hashKey.inDesc) - len);
-  
-  if (!(mapping=(TextDescMap *)
-  	my_hash_search(&textDescMapHash,
-                (const uchar*)&hashKey,
-                sizeof(hashKey))))
-  {
-    DBUG_RETURN(getNewTextDesc(inType, outType, inDescOverride, outDesc, &hashKey));
-  }
-  else
-  {
-    strcpy(outDesc, mapping->outDesc);
-  }
-  DBUG_RETURN(0);
-}
-
-
-/**
-  Convert an IANA character set name into a DB2 for i CCSID value.
-    
-  @param parmIANADesc  An IANA character set name
-  @param[out] db2Ccsid  The equivalent CCSID value
-    
-  @return  0 if successful. Failure otherwise
-*/
-int32 convertIANAToDb2Ccsid(const char* parmIANADesc, uint16* db2Ccsid)
-{
-  int32 rc; 
-  uint16 aixCcsid;
-  char aixCcsidString[Qlg_MaxDescSize];
-  int aixEncodingScheme;
-  int db2EncodingScheme;
-  rc = convertTextDesc(Qlg_TypeIANA, Qlg_TypeAS400CCSID, parmIANADesc, aixCcsidString);
-  if (unlikely(rc))
-  {
-    if (rc == DB2I_ERR_UNSUPP_CHARSET)
-      getErrTxt(DB2I_ERR_UNSUPP_CHARSET, parmIANADesc);
-    
-    return rc;
-  }
-  aixCcsid = atoi(aixCcsidString);
-  rc = getEncodingScheme(aixCcsid, aixEncodingScheme);     
-  if (rc != 0) 
-    return rc;                   
-  switch(aixEncodingScheme) { // Select on encoding scheme     
-    case 0x1100: // EDCDIC SBCS                   
-    case 0x2100: // ASCII SBCS                    
-    case 0x4100: // AIX SBCS                      
-    case 0x4105: // MS Windows                    
-    case 0x5100: // ISO 7 bit ASCII               
-      db2EncodingScheme = 0x1100;
-      break;
-    case 0x1200: // EDCDIC DBCS                   
-    case 0x2200: // ASCII DBCS                    
-      db2EncodingScheme = 0x1200;
-      break;
-    case 0x1301: // EDCDIC Mixed                  
-    case 0x2300: // ASCII Mixed                   
-    case 0x4403: // EUC (ISO 2022)                
-      db2EncodingScheme = 0x1301;
-      break;
-    case 0x7200: // UCS2                          
-      db2EncodingScheme = 0x7200;
-      break;
-    case 0x7807: // UTF-8                         
-      db2EncodingScheme = 0x7807;
-      break;
-    case 0x7500: // UTF-32                        
-      db2EncodingScheme = 0x7500;
-      break;
-    default: // Unknown                       
-      {
-         getErrTxt(DB2I_ERR_UNKNOWN_ENCODING,aixEncodingScheme);
-         return DB2I_ERR_UNKNOWN_ENCODING;
-      }
-      break;
-  }
-  if (aixEncodingScheme == db2EncodingScheme) 
-  {
-    *db2Ccsid = aixCcsid;
-  } 
-  else 
-  {
-    rc = getAssociatedCCSID(aixCcsid, db2EncodingScheme, db2Ccsid); // EDCDIC SBCS
-    if (rc != 0)
-      return rc;
-  }
-  
-  return 0;
+  fprintf(stderr, "ibmdb2 error charset was not found in convertMyCharsetToDb2Ccsid\n");
+  getErrTxt(DB2I_ERR_UNSUPP_CHARSET, charset_info->csname);
+  return -DB2I_ERR_UNSUPP_CHARSET;
 }
 
 
@@ -653,86 +397,6 @@ int32 getAssociatedCCSID(const uint16 inCcsid, const int inEncodingScheme, uint1
   Open an iconv conversion between a MySQL charset and the respective IBM i CCSID
     
   @param direction  The direction of the conversion
-  @param mysqlCSName  Name of the MySQL character set
-  @param db2CCSID  The IBM i CCSID
-  @param hashKey  The key to use for inserting the opened conversion into the cache
-  @param[out] newConversion  The iconv descriptor
-    
-  @return  0 if successful. Failure otherwise
-*/
-static int32 openNewConversion(enum_conversionDirection direction, 
-                               const char* mysqlCSName, 
-                               uint16 db2CCSID, 
-                               IconvMap::HashKey* hashKey, 
-                               iconv_t& newConversion)
-{
-  DBUG_ENTER("db2i_charsetSupport::openNewConversion");
-  
-  char mysqlAix41Desc[Qlg_MaxDescSize];
-  char db2Aix41Desc[Qlg_MaxDescSize];
-  char db2CcsidString[6] = "";
-  int32 rc;
-
-  /*
-     First we have to convert the MySQL IANA-like name and the DB2 CCSID into
-     there equivalent iconv descriptions.
-  */
-  rc = convertTextDesc(Qlg_TypeIANA, Qlg_TypeAix41, mysqlCSName, mysqlAix41Desc);
-  if (unlikely(rc))
-  {
-    if (rc == DB2I_ERR_UNSUPP_CHARSET)
-      getErrTxt(DB2I_ERR_UNSUPP_CHARSET, mysqlCSName);
-    
-    DBUG_RETURN(rc);
-  }
-  CHARSET_INFO *cs= &my_charset_bin;
-  (uint)(cs->cset->long10_to_str)(cs,db2CcsidString,sizeof(db2CcsidString), 10, db2CCSID);  
-  rc = convertTextDesc(Qlg_TypeAS400CCSID, Qlg_TypeAix41, db2CcsidString, db2Aix41Desc);
-  if (unlikely(rc))
-  {
-    if (rc == DB2I_ERR_UNSUPP_CHARSET)
-      getErrTxt(DB2I_ERR_UNSUPP_CHARSET, mysqlCSName);
-    
-    DBUG_RETURN(rc);
-  }
-  
-  /* Call iconv to open the conversion. */
-  if (direction == toDB2)
-  {
-    newConversion = iconv_open(db2Aix41Desc, mysqlAix41Desc);
-  }
-  else
-  {
-    newConversion = iconv_open(mysqlAix41Desc, db2Aix41Desc);
-  }
-
-  if (unlikely(newConversion == (iconv_t) -1))
-  {
-    getErrTxt(DB2I_ERR_UNSUPP_CHARSET, mysqlCSName);
-    DBUG_RETURN(DB2I_ERR_UNSUPP_CHARSET);
-  }
- 
-  /* Insert the new conversion into the cache. */
-  IconvMap* mapping = (IconvMap*)alloc_root(&iconvMapMemroot, sizeof(IconvMap));
-  if (!mapping)
-  {
-    my_error(ER_OUTOFMEMORY, MYF(0), sizeof(IconvMap));
-    DBUG_RETURN( HA_ERR_OUT_OF_MEM);
-  }
-  memcpy(&(mapping->hashKey), hashKey, sizeof(mapping->hashKey));
-  mapping->iconvDesc = newConversion;
-  pthread_mutex_lock(&iconvMapHashMutex);
-  my_hash_insert(&iconvMapHash, (const uchar*)mapping);
-  pthread_mutex_unlock(&iconvMapHashMutex);
-  
-  DBUG_RETURN(0);
-}
-
-
-/**
-  Open an iconv conversion between a MySQL charset and the respective IBM i CCSID
-    
-  @param direction  The direction of the conversion
   @param cs  The MySQL character set
   @param db2CCSID  The IBM i CCSID
   @param[out] newConversion  The iconv descriptor
@@ -750,7 +414,7 @@ int32 getConversion(enum_conversionDirection direction, const CHARSET_INFO* cs, 
   hashKey.direction= direction;
   hashKey.myCharset= cs;
   hashKey.db2CCSID= db2CCSID;
-  
+
   /* Look for the conversion in the cache and add it if it is not there. */
   IconvMap *mapping;
   if (!(mapping= (IconvMap *)
@@ -759,10 +423,76 @@ int32 getConversion(enum_conversionDirection direction, const CHARSET_INFO* cs, 
                 sizeof(hashKey))))
   {
     DBUG_PRINT("getConversion", ("Hash miss for direction=%d, cs=%s, ccsid=%d", direction, cs->name, db2CCSID));
-    rc= openNewConversion(direction, cs->csname, db2CCSID, &hashKey, conversion);
-    if (rc)
-      DBUG_RETURN(rc);
-  }
+
+    EncodingMapEntry *entry = nullptr;
+
+    for (auto& e : encoding_map) {
+      if (strcmp(e.csname, cs->csname) == 0) {
+        entry = &e;
+        break;
+      }
+    }
+
+    if (entry == nullptr) {
+      fprintf(stderr, "ibmdb2 error entry was null charset was not found\n");
+      getErrTxt(DB2I_ERR_UNSUPP_CHARSET, cs->csname);
+      DBUG_RETURN(DB2I_ERR_UNSUPP_CHARSET);
+    }
+
+    const char *iconv_db2 = entry->iconv_db2;
+    // IBM-12345 is the max length of temp buffer
+    char temp[10];
+    if (db2CCSID != entry->db2_ccsid) {
+      switch(db2CCSID) {
+        case 1208:
+        iconv_db2 = "UTF-8";
+        break;
+        case 1200:
+        iconv_db2 = "UTF-16";
+        break;
+        case 13488:
+        iconv_db2 = "UCS-2";
+        break;
+        default:
+        sprintf(temp, "IBM-%hu", db2CCSID);
+        iconv_db2 = temp;
+      }
+    }
+
+    iconv_t newConversion;
+    /* Call iconv to open the conversion. */
+    if (direction == toDB2)
+    {
+      newConversion = iconv_open(iconv_db2, entry->iconv_mariadb);
+    }
+    else
+    {
+      newConversion = iconv_open(entry->iconv_mariadb, iconv_db2);
+    }
+
+    if (unlikely(newConversion == (iconv_t) -1))
+    {
+      fprintf(stderr, "ibmdb2i error opening iconv conversion: iconv_mariadb: %s, iconv_db2: %s toDB2: %d\n",
+       entry->iconv_mariadb, iconv_db2, (int)toDB2);
+      getErrTxt(DB2I_ERR_UNSUPP_CHARSET, cs->csname);
+      DBUG_RETURN(DB2I_ERR_UNSUPP_CHARSET);
+    }
+
+    /* Insert the new conversion into the cache. */
+    IconvMap* mapping = (IconvMap*)alloc_root(&iconvMapMemroot, sizeof(IconvMap));
+    if (!mapping)
+    {
+      my_error(ER_OUTOFMEMORY, MYF(0), sizeof(IconvMap));
+      DBUG_RETURN( HA_ERR_OUT_OF_MEM);
+    }
+    memcpy(&(mapping->hashKey), &hashKey, sizeof(mapping->hashKey));
+    mapping->iconvDesc = newConversion;
+    pthread_mutex_lock(&iconvMapHashMutex);
+    my_hash_insert(&iconvMapHash, (const uchar*)mapping);
+    pthread_mutex_unlock(&iconvMapHashMutex);
+
+    DBUG_RETURN(0);
+    }
   else
   {
     conversion= mapping->iconvDesc;

@@ -54,7 +54,7 @@ enum enum_conversionDirection
   
 int initCharsetSupport();
 void doneCharsetSupport();
-int32 convertIANAToDb2Ccsid(const char* parmIANADesc, uint16* db2Ccsid);
+int32 convertMyCharsetToDb2Ccsid(const CHARSET_INFO* charset_info);
 int32 getEncodingScheme(const uint16 inCcsid, int32& outEncodingScheme);
 int32 getAssociatedCCSID(const uint16 inCcsid, const int inEncodingScheme, uint16* outCcsid);
 int convToEbcdic(const char* input, char* output, size_t ilen);

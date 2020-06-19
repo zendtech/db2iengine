@@ -550,28 +550,32 @@ int ha_ibmdb2i::getFieldTypeMapping(Field* field,
           }
           else
           {
+            // single byte ascii encodings map to single byte ebcdic encodings
+            int32 rc = convertMyCharsetToDb2Ccsid(fieldCharSet);
+            if (rc < 0) {
+              fprintf(stderr, "ibmdb2i in getFieldTypeMapping error after calling convertMyCharsetToDb2Ccsid\n");
+              return -rc;
+            }
+            db2Ccsid = rc;
+
+            if (db2Ccsid != 1208 &&
+                db2Ccsid != 13488)
+            {
+              // Check whether there is a character conversion available.
+              iconv_t temp;
+              rc = getConversion(toDB2, fieldCharSet, db2Ccsid, temp);
+              if (unlikely(rc)){
+                return rc;
+              }
+            }
+
             if (field->type() == MYSQL_TYPE_STRING)
             {
               if (fieldLength > MAX_CHAR_LENGTH)
                 return 1;
-              if (fieldCharSet->mbmaxlen > 1)
+              if (fieldCharSet->mbmaxlen > 1 && memcmp(fieldCharSet->csname, "utf8", 4) != 0)
               {
-                if (memcmp(fieldCharSet->name, "ucs2_", sizeof("ucs2_")-1) == 0 ) // UCS2
-                {
-                  sprintf(stringBuildBuffer, "GRAPHIC(%d)", max(fieldLength / fieldCharSet->mbmaxlen, 1)); // Number of characters
-                  db2Ccsid = 13488;
-                }
-                else if (memcmp(fieldCharSet->name, "utf8_", sizeof("utf8_")-1) == 0 &&
-                         strcmp(fieldCharSet->name, "utf8_general_ci") != 0) 
-                {
-                  sprintf(stringBuildBuffer, "CHAR(%d)", max(fieldLength, 1)); // Number of bytes
-                  db2Ccsid = 1208;
-                }
-                else
-                {
-                  sprintf(stringBuildBuffer, "GRAPHIC(%d)", max(fieldLength / fieldCharSet->mbmaxlen, 1)); // Number of characters
-                  db2Ccsid = 1200;
-                }
+                sprintf(stringBuildBuffer, "GRAPHIC(%d)", max(fieldLength / fieldCharSet->mbmaxlen, 1)); // Number of characters
               }
               else
               {
@@ -583,24 +587,9 @@ int ha_ibmdb2i::getFieldTypeMapping(Field* field,
             {
               if (fieldLength <= MAX_VARCHAR_LENGTH)
               {
-                if (fieldCharSet->mbmaxlen > 1)
+                if (fieldCharSet->mbmaxlen > 1 && memcmp(fieldCharSet->csname, "utf8", 4) != 0)
                 {
-                  if (memcmp(fieldCharSet->name, "ucs2_", sizeof("ucs2_")-1) == 0 ) // UCS2
-                  {
-                    sprintf(stringBuildBuffer, "VARGRAPHIC(%d)", max(fieldLength / fieldCharSet->mbmaxlen, 1)); // Number of characters
-                    db2Ccsid = 13488;
-                  }
-                  else if (memcmp(fieldCharSet->name, "utf8_", sizeof("utf8_")-1) == 0 &&
-                           strcmp(fieldCharSet->name, "utf8_general_ci") != 0) 
-                  {
-                    sprintf(stringBuildBuffer, "VARCHAR(%d)", max(fieldLength, 1)); // Number of bytes
-                    db2Ccsid = 1208;
-                  }
-                  else
-                  {
-                    sprintf(stringBuildBuffer, "VARGRAPHIC(%d)", max(fieldLength / fieldCharSet->mbmaxlen, 1)); // Number of characters
-                    db2Ccsid = 1200;
-                  }
+                  sprintf(stringBuildBuffer, "VARGRAPHIC(%d)", max(fieldLength / fieldCharSet->mbmaxlen, 1)); // Number of characters
                 }
                 else
                 {
@@ -610,24 +599,9 @@ int ha_ibmdb2i::getFieldTypeMapping(Field* field,
               else if (blobMapping == AS_VARCHAR &&
                        (field->flags & PART_KEY_FLAG))
               {
-                if (fieldCharSet->mbmaxlen > 1)
+                if (fieldCharSet->mbmaxlen > 1 && memcmp(fieldCharSet->csname, "utf8", 4) != 0)
                 {
-                  if (memcmp(fieldCharSet->name, "ucs2_", sizeof("ucs2_")-1) == 0 ) // UCS2
-                  {
-                    sprintf(stringBuildBuffer, "LONG VARGRAPHIC ");
-                    db2Ccsid = 13488;
-                  }
-                  else if (memcmp(fieldCharSet->name, "utf8_", sizeof("utf8_")-1) == 0 &&
-                           strcmp(fieldCharSet->name, "utf8_general_ci") != 0) 
-                  {
-                    sprintf(stringBuildBuffer, "LONG VARCHAR ");
-                    db2Ccsid = 1208;
-                  }
-                  else
-                  {
-                    sprintf(stringBuildBuffer, "LONG VARGRAPHIC ");
-                    db2Ccsid = 1200;
-                  }
+                  sprintf(stringBuildBuffer, "LONG VARGRAPHIC ");
                 }
                 else
                 {
@@ -638,24 +612,9 @@ int ha_ibmdb2i::getFieldTypeMapping(Field* field,
               {
                 fieldLength = min(MAX_BLOB_LENGTH, fieldLength);
 
-                if (fieldCharSet->mbmaxlen > 1)
+                if (fieldCharSet->mbmaxlen > 1 && memcmp(fieldCharSet->csname, "utf8", 4) != 0)
                 {
-                  if (memcmp(fieldCharSet->name, "ucs2_", sizeof("ucs2_")-1) == 0 ) // UCS2
-                  {
-                    sprintf(stringBuildBuffer, "DBCLOB(%d)", max(fieldLength / fieldCharSet->mbmaxlen, 1)); // Number of characters
-                    db2Ccsid = 13488;
-                  }
-                  else if (memcmp(fieldCharSet->name, "utf8_", sizeof("utf8_")-1) == 0 &&
-                           strcmp(fieldCharSet->name, "utf8_general_ci") != 0) 
-                  {
-                    sprintf(stringBuildBuffer, "CLOB(%d)", max(fieldLength, 1)); // Number of bytes
-                    db2Ccsid = 1208;
-                  }
-                  else
-                  {
-                    sprintf(stringBuildBuffer, "DBCLOB(%d)", max(fieldLength / fieldCharSet->mbmaxlen, 1)); // Number of characters
-                    db2Ccsid = 1200;
-                  }
+                  sprintf(stringBuildBuffer, "DBCLOB(%d)", max(fieldLength / fieldCharSet->mbmaxlen, 1)); // Number of characters
                 }
                 else
                 {
@@ -665,23 +624,7 @@ int ha_ibmdb2i::getFieldTypeMapping(Field* field,
 
               mapping.append(stringBuildBuffer);
             }
-            if (db2Ccsid == 0) // If not overriding CCSID
-            {
-              int32 rtnCode = convertIANAToDb2Ccsid(fieldCharSet->csname, &db2Ccsid);
-              if (rtnCode)
-                return rtnCode;
-            }
-            
-            if (db2Ccsid != 1208 &&
-                db2Ccsid != 13488)
-            {
-              // Check whether there is a character conversion available.
-              iconv_t temp;
-              int32 rc = getConversion(toDB2, fieldCharSet, db2Ccsid, temp);
-              if (unlikely(rc))
-                return rc;
-            }
-            
+
             sprintf(stringBuildBuffer, " CCSID %d ", db2Ccsid);
             mapping.append(stringBuildBuffer);
           }
