@@ -480,7 +480,7 @@ int32 getConversion(enum_conversionDirection direction, const CHARSET_INFO* cs, 
     }
 
     /* Insert the new conversion into the cache. */
-    IconvMap* mapping = (IconvMap*)alloc_root(&iconvMapMemroot, sizeof(IconvMap));
+    mapping = (IconvMap*)alloc_root(&iconvMapMemroot, sizeof(IconvMap));
     if (!mapping)
     {
       my_error(ER_OUTOFMEMORY, MYF(0), sizeof(IconvMap));
