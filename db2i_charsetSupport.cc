@@ -80,7 +80,8 @@ static EncodingMapEntry encoding_map[] = {
   {"cp932", "IBM-943", "UTF-16", 1200}, // (SJIS for Windows Japanese)
   {"macce", "IBM-1282", "IBM-1153", 1153}, // (Mac Central European)
 
-  // There are no iconv converter tables for the following charsets:
+  // There are no iconv converter tables for the following charsets if specified
+  // DB2I_ERR_UNSUPP_CHARSET error is returned
   // {"armscii8", "", "", }, // (ARMSCII-8 Armenian)
   // {"cp866", "", "", }, // (DOS Russian)
   // {"cp1257", "", "", }, // (Windows Baltic)
@@ -216,7 +217,7 @@ int32 initCharsetSupport()
   init_alloc_root(&textDescMapMemroot, "ibmdb2i", 2048 + ALLOC_ROOT_MIN_BLOCK_SIZE, 0, MYF(0));
   init_alloc_root(&iconvMapMemroot, "ibmdb2i", 256 + ALLOC_ROOT_MIN_BLOCK_SIZE, 0, MYF(0));
 
-  // initMyconv();
+  initMyconv();
   
   DBUG_RETURN(0);
 }
@@ -230,7 +231,7 @@ int32 initCharsetSupport()
 */
 void doneCharsetSupport()
 {
-  // cleanupMyconv();
+  cleanupMyconv();
     
   free_root(&textDescMapMemroot, 0);
   free_root(&iconvMapMemroot, 0);
@@ -490,13 +491,9 @@ int32 getConversion(enum_conversionDirection direction, const CHARSET_INFO* cs, 
     pthread_mutex_lock(&iconvMapHashMutex);
     my_hash_insert(&iconvMapHash, (const uchar*)mapping);
     pthread_mutex_unlock(&iconvMapHashMutex);
-
-    DBUG_RETURN(0);
-    }
-  else
-  {
-    conversion= mapping->iconvDesc;
   }
+
+  conversion= mapping->iconvDesc;
 
   DBUG_RETURN(0);
 }
