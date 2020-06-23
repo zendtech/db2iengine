@@ -8,7 +8,7 @@ version
 
 start
 ```
-/QOpenSys/pkgs/sbin/mysqld & 
+/QOpenSys/pkgs/bin/mysqld & 
 ```
 
 setup
