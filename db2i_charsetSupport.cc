@@ -58,18 +58,18 @@ static EncodingMapEntry encoding_map[] = {
   {"utf8mb3", "UTF-8", "UTF-8", 1208},
   {"utf16", "UTF-16", "UTF-16", 1200},
   {"ucs2", "UCS-2", "UCS-2", 13488},
-  {"ascii", "ISO8859-1", "IBM-1148", 1148}, // (US ASCII) use ISO8859-1?
-  {"latin1", "ISO8859-1", "IBM-1148", 1148}, // (cp1252 West European) AKA ISO8859-1
+  {"ascii", "ISO8859-1", "IBM-1148", 1148}, // (US ASCII)
+  {"latin1", "ISO8859-1", "IBM-1148", 1148}, // (cp1252 West European)
   {"latin2", "ISO8859-2", "IBM-1153", 1153}, // (ISO 8859-2 Central European)
-  {"greek", "ISO8859-7", "IBM-4971", 4971}, // (ISO 8859-7 Greek) was 875
+  {"greek", "ISO8859-7", "IBM-4971", 4971}, // (ISO 8859-7 Greek)
   {"hebrew", "ISO8859-8", "IBM-424", 424}, // (ISO 8859-8 Hebrew)
   {"latin5", "ISO8859-9", "IBM-1155", 1155}, // (ISO 8859-9 Turkish)
   {"tis620", "TIS-620", "IBM-838", 838}, // (TIS620 Thai)
 
   {"euckr", "EUC-KR", "UTF-16", 1200}, // (EUC-KR Korean)
-  {"gbk", "GBK", "UTF-16", 1200}, // (Simplified Chinese) found GBK_ct__64 & GBK_ct but unsure what ct means
+  {"gbk", "GBK", "UTF-16", 1200}, // (Simplified Chinese)
   {"gb2312", "GBK", "UTF-16", 1200}, // (Simplified Chinese) no converter found
-  {"sjis", "IBM-943", "UTF-16", 1200}, // (Shift-JIS Japanese) use IBM-943 ?
+  {"sjis", "IBM-943", "UTF-16", 1200}, // (Shift-JIS Japanese)
   {"ujis", "EUC-JP", "UTF-16", 1200}, // (EUC-JP Japanese)
   {"big5", "big5", "UTF-16", 1200}, // (Big5 Traditional Chinese)
   {"cp1250", "IBM-1250", "IBM-1153", 1153}, // (Windows Central European)
@@ -158,8 +158,6 @@ static const char ccsidType[MAX_IANASTRING][6] =
     {"5050"}, //ujis
     {"1208"}  //utf8
 };
-
-// static _ILEpointer *QlgCvtTextDescToDesc_sym;
 
 /* We keep a cache of the mapping for text descriptions obtained via
    QlgTextDescToDesc. The following structures implement this cache. */
