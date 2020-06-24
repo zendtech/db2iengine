@@ -291,8 +291,7 @@ int32 getConversion(enum_conversionDirection direction, const CHARSET_INFO* cs, 
     }
 
     const char *iconv_db2 = entry->iconv_db2;
-    // IBM-12345 is the max length of temp buffer
-    char temp[10];
+    char temp[sizeof("IBM-12345")];
     if (db2CCSID != entry->db2_ccsid) {
       switch(db2CCSID) {
         case 1208:
