@@ -47,10 +47,22 @@ struct EncodingMapEntry {
   unsigned short db2_ccsid;
 };
 
-// single byte is ebcdic single byte
-// multibyte is UTF-16
-// Here is the list of supported mariadb charsets
-// https://mariadb.com/kb/en/supported-character-sets-and-collations/
+// This table contains the mappings used to convert between MySQL/MariaDB
+// charsets and Db2 CCSIDs. It tries to replicate the prior code which
+// used the following mapping rules:
+// - map single byte charsets to the matching EBCDIC CCSID
+// - map the ucs2 charset to 13488
+// - map the utf8 charset to 1208
+// - map any other charset to 1200
+//
+// Instead of going through a bunch of code to try to map charsets to
+// iconv names and then iconv names to names that QlgCvtTextDescToDesc
+// understands to get the CCSID that we can pass to QTQGRDC to get the
+// associated CCSID... we do that work upfront and store it in this table.
+//
+// NOTE: Any charset which is not in this list will cause the
+// DB2I_ERR_UNSUPP_CHARSET error to be returned, however the Db2 CCSID does
+// not have to match since existing tables may have been mapped differently.
 static EncodingMapEntry encoding_map[] = {
 
   {"utf8", "UTF-8", "UTF-8", 1208},
@@ -58,121 +70,46 @@ static EncodingMapEntry encoding_map[] = {
   {"utf8mb3", "UTF-8", "UTF-8", 1208},
   {"utf16", "UTF-16", "UTF-16", 1200},
   {"ucs2", "UCS-2", "UCS-2", 13488},
-  {"ascii", "ISO8859-1", "IBM-1148", 1148}, // (US ASCII)
-  {"latin1", "ISO8859-1", "IBM-1148", 1148}, // (cp1252 West European)
-  {"latin2", "ISO8859-2", "IBM-1153", 1153}, // (ISO 8859-2 Central European)
-  {"greek", "ISO8859-7", "IBM-4971", 4971}, // (ISO 8859-7 Greek)
-  {"hebrew", "ISO8859-8", "IBM-424", 424}, // (ISO 8859-8 Hebrew)
-  {"latin5", "ISO8859-9", "IBM-1155", 1155}, // (ISO 8859-9 Turkish)
-  {"tis620", "TIS-620", "IBM-838", 838}, // (TIS620 Thai)
+  {"ascii", "ISO8859-1", "IBM-1148", 1148},
+  {"latin1", "ISO8859-1", "IBM-1148", 1148},
+  {"latin2", "ISO8859-2", "IBM-1153", 1153},
+  {"greek", "ISO8859-7", "IBM-4971", 4971},
+  {"hebrew", "ISO8859-8", "IBM-424", 424},
+  {"latin5", "ISO8859-9", "IBM-1155", 1155},
+  {"tis620", "TIS-620", "IBM-838", 838},
 
-  {"euckr", "EUC-KR", "UTF-16", 1200}, // (EUC-KR Korean)
-  {"gbk", "GBK", "UTF-16", 1200}, // (Simplified Chinese)
-  {"gb2312", "GBK", "UTF-16", 1200}, // (Simplified Chinese) no converter found
-  {"sjis", "IBM-943", "UTF-16", 1200}, // (Shift-JIS Japanese)
-  {"ujis", "EUC-JP", "UTF-16", 1200}, // (EUC-JP Japanese)
-  {"big5", "big5", "UTF-16", 1200}, // (Big5 Traditional Chinese)
-  {"cp1250", "IBM-1250", "IBM-1153", 1153}, // (Windows Central European)
-  {"cp1251", "IBM-1251", "IBM-1154", 1154}, // (Windows Cyrillic)
-  {"cp850", "IBM-850", "IBM-1148", 1148}, // (DOS West European)
-  {"cp852", "IBM-852", "IBM-1153", 1153}, // (DOS Central European)
-  {"cp1256", "IBM-1256", "IBM-420", 420}, // (Windows Arabic)
-  {"cp932", "IBM-943", "UTF-16", 1200}, // (SJIS for Windows Japanese)
-  {"macce", "IBM-1282", "IBM-1153", 1153}, // (Mac Central European)
+  {"euckr", "EUC-KR", "UTF-16", 1200},
+  {"gbk", "GBK", "UTF-16", 1200},
+  {"gb2312", "GBK", "UTF-16", 1200},
+  {"sjis", "IBM-943", "UTF-16", 1200},
+  {"ujis", "EUC-JP", "UTF-16", 1200},
+  {"big5", "big5", "UTF-16", 1200},
+  {"cp1250", "IBM-1250", "IBM-1153", 1153},
+  {"cp1251", "IBM-1251", "IBM-1154", 1154},
+  {"cp850", "IBM-850", "IBM-1148", 1148},
+  {"cp852", "IBM-852", "IBM-1153", 1153},
+  {"cp1256", "IBM-1256", "IBM-420", 420},
+  {"cp932", "IBM-943", "UTF-16", 1200},
+  {"macce", "IBM-1282", "IBM-1153", 1153},
 
-  // There are no iconv converter tables for the following charsets if specified
-  // DB2I_ERR_UNSUPP_CHARSET error is returned
-  // {"armscii8", "", "", }, // (ARMSCII-8 Armenian)
-  // {"cp866", "", "", }, // (DOS Russian)
-  // {"cp1257", "", "", }, // (Windows Baltic)
-  // {"dec8", "", "", }, // (DEC Western European)
-  // {"eucjpms", "", "",}, // (UJIS for Windows Japanese)
-  // {"geostd8", "", "", }, // (Georgian)
-  // {"hp8", "", "", }, // (IBM-1050)
-  // {"koi8r", "", "", }, // (8-bit Russian)
-  // {"latin7", "", "", }, // (ISO 8859-13 Baltic)
-  // {"koi8u", "", "", }, // (8 bit Ukrainian)
-  // {"keybcs2", "", "", }, // (DOS Kamenicky Czech-Slovak)
-  // {"macroman", "", "",}, // (Mac West European)
-  // {"swe7", "", "", }, // (7bit Swedish)
-  // {"binary", "", "", }, (Binary pseudo charset) not needed
+  // We cannot support these character sets as there is no matching iconv
+  // conversion that is supported by PASE.
+  // {"armscii8", "", "", },
+  // {"cp866", "", "", },
+  // {"cp1257", "", "", },
+  // {"dec8", "", "", },
+  // {"eucjpms", "", "",},
+  // {"geostd8", "", "", },
+  // {"hp8", "", "", },
+  // {"koi8r", "", "", },
+  // {"latin7", "", "", },
+  // {"koi8u", "", "", },
+  // {"keybcs2", "", "", },
+  // {"macroman", "", "",},
+  // {"swe7", "", "", },
+  // {"binary", "", "", },
   // {"utf16le", "", "", },
   // {"utf32", "", "", },
-};
-
-/*
-  The following arrays define a mapping between IANA-style text descriptors and
-  IBM i CCSID text descriptors. The mapping is a 1-to-1 correlation between
-  corresponding array slots.
-*/
-#define MAX_IANASTRING 23
-static const char ianaStringType[MAX_IANASTRING][10] = 
-{
-    {"ascii"},
-    {"Big5"},    //big5
-    {"cp1250"},
-    {"cp1251"},
-    {"cp1256"},
-    {"cp850"},
-    {"cp852"},
-    {"cp866"},
-    {"IBM943"},   //cp932
-    {"EUC-KR"},   //euckr
-    {"IBM1381"},  //gb2312
-    {"IBM1386"},  //gbk
-    {"greek"},
-    {"hebrew"},
-    {"latin1"},
-    {"latin2"},
-    {"latin5"},
-    {"macce"},
-    {"tis620"},
-    {"Shift_JIS"}, //sjis
-    {"ucs2"},
-    {"EUC-JP"},    //ujis
-    {"utf8"}
-};
-static const char ccsidType[MAX_IANASTRING][6] = 
-{
-    {"367"},  //ascii
-    {"950"},  //big5
-    {"1250"}, //cp1250
-    {"1251"}, //cp1251
-    {"1256"}, //cp1256
-    {"850"},  //cp850
-    {"852"},  //cp852
-    {"866"},  //cp866
-    {"943"},  //cp932
-    {"970"},  //euckr
-    {"1381"}, //gb2312
-    {"1386"}, //gbk
-    {"813"},  //greek
-    {"916"},  //hebrew
-    {"923"},  //latin1
-    {"912"},  //latin2
-    {"920"},  //latin5
-    {"1282"}, //macce
-    {"874"},  //tis620
-    {"943"},  //sjis
-    {"13488"},//ucs2
-    {"5050"}, //ujis
-    {"1208"}  //utf8
-};
-
-/* We keep a cache of the mapping for text descriptions obtained via
-   QlgTextDescToDesc. The following structures implement this cache. */
-static HASH textDescMapHash;
-static MEM_ROOT textDescMapMemroot;
-static pthread_mutex_t textDescMapHashMutex;
-struct TextDescMap
-{
-  struct HashKey
-  {
-    int32 inType;
-    int32 outType;
-    char inDesc[Qlg_MaxDescSize];
-  } hashKey;  
-  char outDesc[Qlg_MaxDescSize];
 };
 
 /* We keep a cache of the mapping for open iconv descriptors. The following 
@@ -191,7 +128,6 @@ struct IconvMap
   iconv_t iconvDesc;
 };
 
-
 /**
   Initialize the static structures used by this module.
   
@@ -204,15 +140,11 @@ int32 initCharsetSupport()
 {
   DBUG_ENTER("initCharsetSupport");
 
-  pthread_mutex_init(&textDescMapHashMutex,MY_MUTEX_INIT_FAST);
-  my_hash_init(&textDescMapHash, &my_charset_bin, 10, offsetof(TextDescMap, hashKey), sizeof(TextDescMap::hashKey), 0, 0, HASH_UNIQUE);
-
   pthread_mutex_init(&iconvMapHashMutex,MY_MUTEX_INIT_FAST);
   my_hash_init(&iconvMapHash, &my_charset_bin, 10, offsetof(IconvMap, hashKey), sizeof(IconvMap::hashKey), 0, 0, HASH_UNIQUE);
  
   DBUG_PRINT("initCharsetSupport",  ("hashes initialized"));
 
-  init_alloc_root(&textDescMapMemroot, "ibmdb2i", 2048 + ALLOC_ROOT_MIN_BLOCK_SIZE, 0, MYF(0));
   init_alloc_root(&iconvMapMemroot, "ibmdb2i", 256 + ALLOC_ROOT_MIN_BLOCK_SIZE, 0, MYF(0));
 
   initMyconv();
@@ -230,12 +162,8 @@ int32 initCharsetSupport()
 void doneCharsetSupport()
 {
   cleanupMyconv();
-    
-  free_root(&textDescMapMemroot, 0);
+
   free_root(&iconvMapMemroot, 0);
-  
-  pthread_mutex_destroy(&textDescMapHashMutex);
-  my_hash_free(&textDescMapHash);
   pthread_mutex_destroy(&iconvMapHashMutex);
   my_hash_free(&iconvMapHash);
 }
@@ -246,7 +174,6 @@ int32 convertMyCharsetToDb2Ccsid(const CHARSET_INFO* charset_info) {
       return entry.db2_ccsid;
     }
   }
-  fprintf(stderr, "ibmdb2 error charset was not found in convertMyCharsetToDb2Ccsid\n");
   getErrTxt(DB2I_ERR_UNSUPP_CHARSET, charset_info->csname);
   return -DB2I_ERR_UNSUPP_CHARSET;
 }
@@ -314,81 +241,6 @@ int32 getEncodingScheme(const uint16 inCcsid, int32& outEncodingScheme)
   }
   outEncodingScheme = GESPES;
   
-  DBUG_RETURN(0);
-}
-
-
-/**
-  Get the best fit equivalent CCSID. (Wrapper for QTQGRDC API)
-    
-  @param inCcsid  An IBM i CCSID
-  @param inEncodingScheme  The encoding scheme
-  @param[out] outCcsid  The equivalent CCSID
-    
-  @return  0 if successful. Failure otherwise
-*/
-int32 getAssociatedCCSID(const uint16 inCcsid, const int inEncodingScheme, uint16* outCcsid)
-{
-  DBUG_ENTER("db2i_charsetSupport::getAssociatedCCSID");
-  static bool ptrInited = FALSE;
-  static char ptrSpace[sizeof(ILEpointer) + 15];
-  static ILEpointer* ptrToPtr = (ILEpointer*)roundToQuadWordBdy(ptrSpace);
-  int rc;
-  
-  // Override non-standard charsets
-  if ((inCcsid == 923) && (inEncodingScheme == 0x1100))
-  {
-    *outCcsid = 1148;
-    DBUG_RETURN(0);
-  }
-  else if ((inCcsid == 1250) && (inEncodingScheme == 0x1100))
-  {
-    *outCcsid = 1153;
-    DBUG_RETURN(0);
-  }
-
-  if (!ptrInited)
-  {  
-    rc = _RSLOBJ2(ptrToPtr, RSLOBJ_TS_PGM, "QTQGRDC", "QSYS");
-
-    if (rc)
-    {
-       getErrTxt(DB2I_ERR_RESOLVE_OBJ,"QTQGRDC","QSYS","*PGM",errno);
-       DBUG_RETURN(DB2I_ERR_RESOLVE_OBJ);
-    }
-    ptrInited = TRUE;
-  }
-
-  int GRDCCCSID = inCcsid;
-  int GRDCES = inEncodingScheme;
-  int GRDCSel = 0;
-  int GRDCAssCCSID;
-  int GRDCFB[3];
-  void* ILEArgv[7];
-  ILEArgv[0] = &GRDCCCSID;
-  ILEArgv[1] = &GRDCES;
-  ILEArgv[2] = &GRDCSel;
-  ILEArgv[3] = &GRDCAssCCSID;
-  ILEArgv[4] = &GRDCFB;
-  ILEArgv[5] = NULL;
-  
-  rc = _PGMCALL(ptrToPtr, (void**)&ILEArgv, 0);
-
-  if (rc)  
-  {
-     getErrTxt(DB2I_ERR_PGMCALL,"QTQGRDC","QSYS",rc);
-     DBUG_RETURN(DB2I_ERR_PGMCALL);
-  }
-  if (GRDCFB[0] != 0 ||
-      GRDCFB[1] != 0 ||
-      GRDCFB[2] != 0)
-  {
-    getErrTxt(DB2I_ERR_QTQGRDC,GRDCFB[0],GRDCFB[1],GRDCFB[2]);
-    DBUG_RETURN(DB2I_ERR_QTQGRDC);
-  }
- 
-  *outCcsid = GRDCAssCCSID;
-
   DBUG_RETURN(0);
 }
 

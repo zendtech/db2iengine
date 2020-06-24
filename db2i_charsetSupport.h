@@ -56,7 +56,6 @@ int initCharsetSupport();
 void doneCharsetSupport();
 int32 convertMyCharsetToDb2Ccsid(const CHARSET_INFO* charset_info);
 int32 getEncodingScheme(const uint16 inCcsid, int32& outEncodingScheme);
-int32 getAssociatedCCSID(const uint16 inCcsid, const int inEncodingScheme, uint16* outCcsid);
 int convToEbcdic(const char* input, char* output, size_t ilen);
 int convFromEbcdic(const char* input, char* output, size_t ilen);
 int32 getConversion(enum_conversionDirection direction, const CHARSET_INFO* cs, uint16 db2CCSID, iconv_t& conversion);

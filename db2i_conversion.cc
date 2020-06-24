@@ -553,7 +553,6 @@ int ha_ibmdb2i::getFieldTypeMapping(Field* field,
             // single byte ascii encodings map to single byte ebcdic encodings
             int32 rc = convertMyCharsetToDb2Ccsid(fieldCharSet);
             if (rc < 0) {
-              fprintf(stderr, "ibmdb2i in getFieldTypeMapping error after calling convertMyCharsetToDb2Ccsid\n");
               return -rc;
             }
             db2Ccsid = rc;
@@ -573,7 +572,7 @@ int ha_ibmdb2i::getFieldTypeMapping(Field* field,
             {
               if (fieldLength > MAX_CHAR_LENGTH)
                 return 1;
-              if (fieldCharSet->mbmaxlen > 1 && memcmp(fieldCharSet->csname, "utf8", 4) != 0)
+              if (fieldCharSet->mbmaxlen > 1 && strncmp(fieldCharSet->csname, "utf8", 4) != 0)
               {
                 sprintf(stringBuildBuffer, "GRAPHIC(%d)", max(fieldLength / fieldCharSet->mbmaxlen, 1)); // Number of characters
               }
@@ -587,7 +586,7 @@ int ha_ibmdb2i::getFieldTypeMapping(Field* field,
             {
               if (fieldLength <= MAX_VARCHAR_LENGTH)
               {
-                if (fieldCharSet->mbmaxlen > 1 && memcmp(fieldCharSet->csname, "utf8", 4) != 0)
+                if (fieldCharSet->mbmaxlen > 1 && strncmp(fieldCharSet->csname, "utf8", 4) != 0)
                 {
                   sprintf(stringBuildBuffer, "VARGRAPHIC(%d)", max(fieldLength / fieldCharSet->mbmaxlen, 1)); // Number of characters
                 }
@@ -599,7 +598,7 @@ int ha_ibmdb2i::getFieldTypeMapping(Field* field,
               else if (blobMapping == AS_VARCHAR &&
                        (field->flags & PART_KEY_FLAG))
               {
-                if (fieldCharSet->mbmaxlen > 1 && memcmp(fieldCharSet->csname, "utf8", 4) != 0)
+                if (fieldCharSet->mbmaxlen > 1 && strncmp(fieldCharSet->csname, "utf8", 4) != 0)
                 {
                   sprintf(stringBuildBuffer, "LONG VARGRAPHIC ");
                 }
@@ -612,7 +611,7 @@ int ha_ibmdb2i::getFieldTypeMapping(Field* field,
               {
                 fieldLength = min(MAX_BLOB_LENGTH, fieldLength);
 
-                if (fieldCharSet->mbmaxlen > 1 && memcmp(fieldCharSet->csname, "utf8", 4) != 0)
+                if (fieldCharSet->mbmaxlen > 1 && strncmp(fieldCharSet->csname, "utf8", 4) != 0)
                 {
                   sprintf(stringBuildBuffer, "DBCLOB(%d)", max(fieldLength / fieldCharSet->mbmaxlen, 1)); // Number of characters
                 }
