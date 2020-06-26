@@ -21,6 +21,7 @@ MariaDB [(none)]> CREATE USER 'ranger'@'localhost' IDENTIFIED BY 'ranger';
 MariaDB [(none)]> GRANT ALL PRIVILEGES ON * . * TO 'ranger'@'localhost';
 MariaDB [(none)]> FLUSH PRIVILEGES;
 MariaDB [(none)]> select host, user, password from mysql.user;
+MariaDB [(none)]> install plugin ibmdb2i soname "ha_ibmdb2i.so";
 ```
 
 test
