@@ -10,6 +10,7 @@ $ mysqld_safe &
 $ mysql 
 
 MariaDB [(none)]> create database db2itest;
+MariaDB [(none)]> install plugin ibmdb2i soname "ha_ibmdb2i.so";
 MariaDB [(none)]> quit
 ```
 
