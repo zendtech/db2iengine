@@ -37,195 +37,118 @@ OF SUCH DAMAGE.
 #include "db2i_collationSupport.h"
 #include "db2i_errors.h"
 
-
-/*
-  The following arrays define a mapping between MySQL collation names and
-  corresponding IBM i sort sequences. The mapping is a 1-to-1 correlation 
-  between corresponding array slots but is incomplete without case-sensitivity
-  markers dynamically added to the mySqlSortSequence names.
-*/
-#define MAX_COLLATION 87
-static const char* mySQLCollation[MAX_COLLATION] = 
-{
-    "ascii_general",
-    "ascii",
-    "big5_chinese",
-    "big5",
-    "cp1250_croatian",
-    "cp1250_general",
-    "cp1250_polish",
-    "cp1250",
-    "cp1251_bulgarian",
-    "cp1251_general",
-    "cp1251",
-    "cp1256_general",
-    "cp1256",
-    "cp850_general",
-    "cp850",
-    "cp852_general",
-    "cp852",
-    "cp932_japanese",
-    "cp932",
-    "euckr_korean",
-    "euckr",
-    "gb2312_chinese",
-    "gb2312",
-    "gbk_chinese",
-    "gbk",
-    "greek_general",
-    "greek",
-    "hebrew_general",
-    "hebrew",
-    "latin1_danish",
-    "latin1_general",
-    "latin1_german1",
-    "latin1_spanish",
-    "latin1_swedish",
-    "latin1",
-    "latin2_croatian",
-    "latin2_general",
-    "latin2_hungarian",
-    "latin2",
-    "latin5_turkish",
-    "latin5",
-    "macce_general",
-    "macce",
-    "sjis_japanese",
-    "sjis",
-    "tis620_thai",
-    "tis620",
-    "ucs2_czech",
-    "ucs2_danish",
-    "ucs2_esperanto",
-    "ucs2_estonian",
-    "ucs2_general",
-    "ucs2_hungarian",
-    "ucs2_icelandic",
-    "ucs2_latvian",
-    "ucs2_lithuanian",
-    "ucs2_persian",
-    "ucs2_polish",
-    "ucs2_romanian",
-    "ucs2_slovak",
-    "ucs2_slovenian",
-    "ucs2_spanish",
-    "ucs2_swedish",
-    "ucs2_turkish",
-    "ucs2_unicode",
-    "ucs2",
-    "ujis_japanese",
-    "ujis",
-    "utf8_czech",
-    "utf8_danish",
-    "utf8_esperanto",
-    "utf8_estonian",
-    "utf8_general",
-    "utf8_hungarian",
-    "utf8_icelandic",
-    "utf8_latvian",
-    "utf8_lithuanian",
-    "utf8_persian",
-    "utf8_polish",
-    "utf8_romanian",
-    "utf8_slovak",
-    "utf8_slovenian",
-    "utf8_spanish",
-    "utf8_swedish",
-    "utf8_turkish",
-    "utf8_unicode",
-    "utf8"
+struct CollationMapEntry {
+  const char* collation_name;
+  const char* db2_sort_sequence;
 };
 
-
-static const char* mySqlSortSequence[MAX_COLLATION] = 
-{
-    "QALA101F4",  
-    "QBLA101F4",
-    "QACHT04B0",  
-    "QBCHT04B0",
-    "QALA20481",  
-    "QCLA20481",
-    "QDLA20481",
-    "QELA20481",
-    "QACYR0401", 
-    "QBCYR0401",
-    "QCCYR0401",  
-    "QAARA01A4",
-    "QBARA01A4",  
-    "QCLA101F4",
-    "QDLA101F4",  
-    "QALA20366",
-    "QBLA20366",  
-    "QAJPN04B0",
-    "QBJPN04B0",  
-    "QAKOR04B0",
-    "QBKOR04B0",  
-    "QACHS04B0",  
-    "QBCHS04B0",  
-    "QCCHS04B0",  
-    "QDCHS04B0",  
-    "QAELL036B",  
-    "QBELL036B",  
-    "QAHEB01A8",
-    "QBHEB01A8",  
-    "QALA1047C",
-    "QBLA1047C",  
-    "QCLA1047C",
-    "QDLA1047C",
-    "QELA1047C",
-    "QFLA1047C",
-    "QCLA20366",  
-    "QELA20366",
-    "QFLA20366",
-    "QGLA20366",
-    "QATRK0402",  
-    "QBTRK0402",
-    "QHLA20366",  
-    "QILA20366",
-    "QCJPN04B0",  
-    "QDJPN04B0",
-    "QATHA0346",  
-    "QBTHA0346",  
-    "ACS_CZ",        
-    "ADA_DK",
-    "AEO",
-    "AET",
-    "QAUCS04B0",  
-    "AHU",
-    "AIS",
-    "ALV",
-    "ALT",
-    "AFA",
-    "APL",
-    "ARO",
-    "ASK",
-    "ASL",
-    "AES",
-    "ASW",
-    "ATR",
-    "AEN",
-    "*HEX",
-    "QEJPN04B0",  
-    "QFJPN04B0",
-    "ACS_CZ",        
-    "ADA_DK",
-    "AEO",
-    "AET",
-    "QAUCS04B0",
-    "AHU",
-    "AIS",
-    "ALV",
-    "ALT",
-    "AFA",
-    "APL",
-    "ARO",
-    "ASK",
-    "ASL",
-    "AES",
-    "ASW",
-    "ATR",
-    "AEN",
-    "*HEX"
+static CollationMapEntry collation_map[] = {
+  { "ascii_general", "QALA101F4"},
+  { "ascii", "QBLA101F4" },
+  { "big5_chinese", "QACHT04B0" },
+  { "big5", "QBCHT04B0" },
+  { "cp1250_croatian", "QALA20481" },
+  { "cp1250_general",  "QCLA20481" },
+  { "cp1250_polish", "QDLA20481" },
+  { "cp1250", "QELA20481" },
+  { "cp1251_bulgarian", "QACYR0401" },
+  { "cp1251_general", "QBCYR0401" },
+  { "cp1251", "QCCYR0401" },
+  { "cp1256_general", "QAARA01A4" },
+  { "cp1256", "QBARA01A4" },
+  { "cp850_general", "QCLA101F4" },
+  { "cp850", "QDLA101F4" },
+  { "cp852_general", "QALA20366" },
+  { "cp852", "QBLA20366" },
+  { "cp932_japanese", "QAJPN04B0" },
+  { "cp932", "QBJPN04B0" },
+  { "euckr_korean", "QAKOR04B0" },
+  { "euckr", "QBKOR04B0" },
+  { "gb2312_chinese", "QACHS04B0" },
+  { "gb2312", "QBCHS04B0" },
+  { "gbk_chinese", "QCCHS04B0" },
+  { "gbk", "QDCHS04B0" },
+  { "greek_general", "QAELL036B" },
+  { "greek", "QBELL036B" },
+  { "hebrew_general", "QAHEB01A8" },
+  { "hebrew", "QBHEB01A8" },
+  { "latin1_danish", "QALA1047C" },
+  { "latin1_general", "QBLA1047C" },
+  { "latin1_german1", "QCLA1047C" },
+  { "latin1_spanish", "QDLA1047C" },
+  { "latin1_swedish", "QELA1047C" },
+  { "latin1", "QFLA1047C" },
+  { "latin2_croatian", "QCLA20366" },
+  { "latin2_general", "QELA20366" },
+  { "latin2_hungarian", "QFLA20366" },
+  { "latin2", "QGLA20366" },
+  { "latin5_turkish", "QATRK0402" },
+  { "latin5", "QBTRK0402" },
+  { "macce_general", "QHLA20366" },
+  { "macce", "QILA20366" },
+  { "sjis_japanese", "QCJPN04B0" },
+  { "sjis", "QDJPN04B0" },
+  { "tis620_thai", "QATHA0346" },
+  { "tis620", "QBTHA0346" },
+  { "ucs2_czech", "ACS_CZ" },
+  { "ucs2_danish", "ADA_DK" },
+  { "ucs2_esperanto", "AEO" },
+  { "ucs2_estonian", "AET" },
+  { "ucs2_general", "QAUCS04B0" },
+  { "ucs2_hungarian", "AHU" },
+  { "ucs2_icelandic", "AIS" },
+  { "ucs2_latvian", "ALV" },
+  { "ucs2_lithuanian", "ALT" },
+  { "ucs2_persian", "AFA" },
+  { "ucs2_polish", "APL" },
+  { "ucs2_romanian", "ARO" },
+  { "ucs2_slovak", "ASK" },
+  { "ucs2_slovenian", "ASL" },
+  { "ucs2_spanish", "AES" },
+  { "ucs2_swedish", "ASW" },
+  { "ucs2_turkish",  "ATR" },
+  { "ucs2_unicode", "AEN" },
+  { "ucs2", "*HEX" },
+  { "ujis_japanese", "QEJPN04B0" },
+  { "ujis", "QFJPN04B0" },
+  { "utf8_czech", "ACS_CZ" },
+  { "utf8_danish", "ADA_DK" },
+  { "utf8_esperanto", "AEO" },
+  { "utf8_estonian", "AET" },
+  { "utf8_general", "QAUCS04B0" },
+  { "utf8_hungarian", "AHU" },
+  { "utf8_icelandic", "AIS" },
+  { "utf8_latvian", "ALV" },
+  { "utf8_lithuanian", "ALT" },
+  { "utf8_persian", "AFA" },
+  { "utf8_polish", "APL" },
+  { "utf8_romanian", "ARO" },
+  { "utf8_slovak", "ASK" },
+  { "utf8_slovenian", "ASL" },
+  { "utf8_spanish", "AES" },
+  { "utf8_swedish", "ASW" },
+  { "utf8_turkish", "ATR" },
+  { "utf8_unicode", "AEN" },
+  { "utf8", "*HEX" },
+  { "utf8mb4_czech", "ACS_CZ" },
+  { "utf8mb4_danish", "ADA_DK" },
+  { "utf8mb4_esperanto", "AEO" },
+  { "utf8mb4_estonian", "AET" },
+  { "utf8mb4_general", "QAUCS04B0" },
+  { "utf8mb4_hungarian", "AHU" },
+  { "utf8mb4_icelandic", "AIS" },
+  { "utf8mb4_latvian", "ALV" },
+  { "utf8mb4_lithuanian", "ALT" },
+  { "utf8mb4_persian", "AFA" },
+  { "utf8mb4_polish", "APL" },
+  { "utf8mb4_romanian", "ARO" },
+  { "utf8mb4_slovak", "ASK" },
+  { "utf8mb4_slovenian", "ASL" },
+  { "utf8mb4_spanish", "AES" },
+  { "utf8mb4_swedish", "ASW" },
+  { "utf8mb4_turkish", "ATR" },
+  { "utf8mb4_unicode", "AEN" },
+  { "utf8mb4", "*HEX" }
 };
 
 
@@ -243,28 +166,23 @@ static int32 getAssociatedSortSequence(const CHARSET_INFO *fieldCharSet, const c
 
   if (strcmp(fieldCharSet->csname,"binary") != 0)
   {
-    int collationSearchLen = strlen(fieldCharSet->name);
+    size_t collationSearchLen = strlen(fieldCharSet->name);
     if (fieldCharSet->state & MY_CS_BINSORT)
-      collationSearchLen -= 4;
+      collationSearchLen -= strlen("_bin");
     else
-      collationSearchLen -= 3;
-    
-    uint16 loopCnt = 0;
-    for (loopCnt = 0; loopCnt < MAX_COLLATION; ++loopCnt)
-    {
-      if ((strlen(mySQLCollation[loopCnt]) == (size_t) collationSearchLen) && 
-          (strncmp((char*)mySQLCollation[loopCnt], fieldCharSet->name, collationSearchLen) == 0))
-        break;
-    }
-    if (loopCnt == MAX_COLLATION)  // Did not find associated sort sequence
-    {
-      getErrTxt(DB2I_ERR_SRTSEQ);
-      DBUG_RETURN(DB2I_ERR_SRTSEQ);
-    }
-    *rtnSortSequence = mySqlSortSequence[loopCnt];
-  }
+      collationSearchLen -= strlen("_ci");
 
-  DBUG_RETURN(0);
+    for (auto& entry : collation_map)
+    {
+      if ((strlen(entry.collation_name) == collationSearchLen) && 
+          (memcmp(entry.collation_name, fieldCharSet->name, collationSearchLen) == 0)) {
+          *rtnSortSequence = entry.db2_sort_sequence;
+          DBUG_RETURN(0);
+      }
+    }
+    getErrTxt(DB2I_ERR_SRTSEQ);
+    DBUG_RETURN(DB2I_ERR_SRTSEQ);
+  }
 }
 
 

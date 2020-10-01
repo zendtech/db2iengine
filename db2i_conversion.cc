@@ -567,14 +567,21 @@ int ha_ibmdb2i::getFieldTypeMapping(Field* field,
                 return rc;
               }
             }
+            // check if the charsert is utf8
+            bool is_utf8 = strncmp(fieldCharSet->csname, "utf8", 4) == 0;
+            // check if the collation us utf8_general_ci or utf8mb4_general_ci
+            bool is_utf8_general_ci = strcmp(fieldCharSet->name, "utf8_general_ci") == 0 || strcmp(fieldCharSet->name, "utf8mb4_general_ci") == 0;
 
             if (field->type() == MYSQL_TYPE_STRING)
             {
               if (fieldLength > MAX_CHAR_LENGTH)
                 return 1;
-              if (fieldCharSet->mbmaxlen > 1 && strncmp(fieldCharSet->csname, "utf8", 4) != 0)
+              if (fieldCharSet->mbmaxlen > 1 && (!is_utf8 || is_utf8_general_ci))
               {
                 sprintf(stringBuildBuffer, "GRAPHIC(%d)", max(fieldLength / fieldCharSet->mbmaxlen, 1)); // Number of characters
+                // Need to set CCSID to 1200 (UTF-16) when using multi-byte charsets
+                // As well as when the collation is utf*_general_ci because of sort sequence issues
+                db2Ccsid = 1200;
               }
               else
               {
@@ -586,9 +593,12 @@ int ha_ibmdb2i::getFieldTypeMapping(Field* field,
             {
               if (fieldLength <= MAX_VARCHAR_LENGTH)
               {
-                if (fieldCharSet->mbmaxlen > 1 && strncmp(fieldCharSet->csname, "utf8", 4) != 0)
+                if (fieldCharSet->mbmaxlen > 1 && (!is_utf8 || is_utf8_general_ci))
                 {
                   sprintf(stringBuildBuffer, "VARGRAPHIC(%d)", max(fieldLength / fieldCharSet->mbmaxlen, 1)); // Number of characters
+                  // Need to set CCSID to 1200 (UTF-16) when using multi-byte charsets
+                  // As well as when the collation is utf*_general_ci because of sort sequence issues
+                  db2Ccsid = 1200;
                 }
                 else
                 {
@@ -598,9 +608,12 @@ int ha_ibmdb2i::getFieldTypeMapping(Field* field,
               else if (blobMapping == AS_VARCHAR &&
                        (field->flags & PART_KEY_FLAG))
               {
-                if (fieldCharSet->mbmaxlen > 1 && strncmp(fieldCharSet->csname, "utf8", 4) != 0)
+                if (fieldCharSet->mbmaxlen > 1 && (!is_utf8 || is_utf8_general_ci))
                 {
                   sprintf(stringBuildBuffer, "LONG VARGRAPHIC ");
+                  // Need to set CCSID to 1200 (UTF-16) when using multi-byte charsets
+                  // As well as when the collation is utf*_general_ci because of sort sequence issues
+                  db2Ccsid = 1200;
                 }
                 else
                 {
@@ -611,9 +624,12 @@ int ha_ibmdb2i::getFieldTypeMapping(Field* field,
               {
                 fieldLength = min(MAX_BLOB_LENGTH, fieldLength);
 
-                if (fieldCharSet->mbmaxlen > 1 && strncmp(fieldCharSet->csname, "utf8", 4) != 0)
+                if (fieldCharSet->mbmaxlen > 1 && (!is_utf8 || is_utf8_general_ci))
                 {
                   sprintf(stringBuildBuffer, "DBCLOB(%d)", max(fieldLength / fieldCharSet->mbmaxlen, 1)); // Number of characters
+                  // Need to set CCSID to 1200 (UTF-16) when using multi-byte charsets
+                  // As well as when the collation is utf*_general_ci because of sort sequence issues
+                  db2Ccsid = 1200;
                 }
                 else
                 {
