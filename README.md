@@ -3,7 +3,7 @@ MariaDB IBM i DB2 storage engine.
 
 version
 ```
-1.1.1
+1.1.3
 ```
 
 start
