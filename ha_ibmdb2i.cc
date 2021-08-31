@@ -849,8 +849,11 @@ int ha_ibmdb2i::prepareRowForWrite(char* data, char* nulls, bool honorIdentCols)
   default_identity_value = FALSE;  
     
   ulong sql_mode = ha_thd()->variables.sql_mode;
-  
-  my_bitmap_map *old_map= dbug_tmp_use_all_columns(table, table->read_set);
+  #if MYSQL_VERSION_ID >= 100328
+    MY_BITMAP *old_map= dbug_tmp_use_all_columns(table, &table->read_set);
+  #else
+    my_bitmap_map *old_map= dbug_tmp_use_all_columns(table, table->read_set);
+  #endif
   for (Field **field = table->field; *field && !rc; ++field)
   {  
     int fieldIndex = (*field)->field_index;
@@ -888,8 +891,11 @@ int ha_ibmdb2i::prepareRowForWrite(char* data, char* nulls, bool honorIdentCols)
   if (!rc && db2Table->hasBlobs())
     rc = db2i_ileBridge::getBridgeForThread()->objectOverride(activeHandle,
                                                             activeWriteBuf->ptr());  
-
-  dbug_tmp_restore_column_map(table->read_set, old_map);
+  #if MYSQL_VERSION_ID >= 100328
+    dbug_tmp_restore_column_map(&table->read_set, old_map);
+  #else
+    dbug_tmp_restore_column_map(table->read_set, old_map);
+  #endif
 
   return rc; 
 }
@@ -1289,12 +1295,21 @@ int ha_ibmdb2i::rnd_end()
 int32 ha_ibmdb2i::mungeDB2row(uchar* record, const char* dataPtr, const char* nullMapPtr, bool skipLOBs)
 {
   DBUG_ASSERT(dataPtr);
-  
+  #if MYSQL_VERSION_ID >= 100328
+  MY_BITMAP *old_write_map= dbug_tmp_use_all_columns(table, &table->write_set);
+  MY_BITMAP *old_read_map;
+  #else
   my_bitmap_map *old_write_map= dbug_tmp_use_all_columns(table, table->write_set);
   my_bitmap_map *old_read_map;
+  #endif
   
-  if (unlikely(readAllColumns))
-    old_read_map = tmp_use_all_columns(table, table->read_set);
+  if (unlikely(readAllColumns)){
+    #if MYSQL_VERSION_ID >= 100328
+      old_read_map = tmp_use_all_columns(table, &table->read_set);
+    #else
+      old_read_map = tmp_use_all_columns(table, table->read_set);
+    #endif
+  }
 
   resetCharacterConversionBuffers();
   
@@ -1320,9 +1335,18 @@ int32 ha_ibmdb2i::mungeDB2row(uchar* record, const char* dataPtr, const char* nu
     
   }
     
-  if (unlikely(readAllColumns))
-    tmp_restore_column_map(table->read_set, old_read_map);
-  dbug_tmp_restore_column_map(table->write_set, old_write_map);
+  if (unlikely(readAllColumns)) {
+    #if MYSQL_VERSION_ID >= 100328
+      tmp_restore_column_map(&table->read_set, old_read_map);
+    #else
+      tmp_restore_column_map(table->read_set, old_read_map);
+    #endif
+  }
+  #if MYSQL_VERSION_ID >= 100328
+    dbug_tmp_restore_column_map(&table->write_set, old_write_map);
+  #else
+    dbug_tmp_restore_column_map(table->write_set, old_write_map);
+  #endif
   
   return 0;
 }

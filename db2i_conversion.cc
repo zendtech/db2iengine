@@ -241,7 +241,11 @@ static void get_field_default_value(Field *field,
     defaultClause.append(" DEFAULT ");
     if (!field->is_null())
     {
-      my_bitmap_map *old_map = tmp_use_all_columns(field->table, field->table->read_set);
+      #if MYSQL_VERSION_ID >= 100328
+        MY_BITMAP *old_map = tmp_use_all_columns(field->table, &field->table->read_set);
+      #else
+        my_bitmap_map *old_map = tmp_use_all_columns(field->table, field->table->read_set);
+      #endif
       char tmp[MAX_FIELD_WIDTH];
       
       if (field->real_type() == MYSQL_TYPE_ENUM ||
@@ -373,7 +377,11 @@ static void get_field_default_value(Field *field,
         else
           defaultClause.length(0);
       }
-      tmp_restore_column_map(field->table->read_set, old_map);
+      #if MYSQL_VERSION_ID >= 100328
+        tmp_restore_column_map(&field->table->read_set, old_map);
+      #else
+        tmp_restore_column_map(field->table->read_set, old_map);
+      #endif
     }
     else if (field->maybe_null())
       defaultClause.append(STRING_WITH_LEN("NULL"));
