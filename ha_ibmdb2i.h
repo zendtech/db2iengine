@@ -243,7 +243,7 @@ public:
   int open(const char *name, int mode, uint test_if_locked);
   int close(void);
   int write_row(uchar * buf);
-  int update_row(const uchar * old_data, uchar * new_data);
+  virtual int update_row(const uchar * old_data, const uchar * new_data) override;
   int delete_row(const uchar * buf);
   int index_init(uint idx, bool sorted);
   int index_read(uchar * buf, const uchar * key,
