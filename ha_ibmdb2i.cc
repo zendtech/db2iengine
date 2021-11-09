@@ -902,7 +902,7 @@ int ha_ibmdb2i::prepareRowForWrite(char* data, char* nulls, bool honorIdentCols)
 
 
 
-int ha_ibmdb2i::update_row(const uchar * old_data, uchar * new_data)
+int ha_ibmdb2i::update_row(const uchar * old_data, const uchar * new_data)
 {
   DBUG_ENTER("ha_ibmdb2i::update_row");
   increment_statistics(&SSV::ha_update_count);
