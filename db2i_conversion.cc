@@ -1258,8 +1258,6 @@ int32 ha_ibmdb2i::convertDB2toMySQL(const DB2Field& db2Field, Field* field, cons
       {
         uint precision= ((Field_new_decimal*)field)->precision;
         uint scale= field->decimals();
-        // precsion = uint
-        // MAX_DEC_PRECISION = uint32
         uint db2Precision = std::min(precision, MAX_DEC_PRECISION);
         uint decimalPlace = precision-scale+1;
         char temp[80];
