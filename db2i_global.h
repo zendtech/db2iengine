@@ -74,8 +74,7 @@ OF SUCH DAMAGE.
  * Explicit macro will be used.
  */
 
-#define min(a,b)         ((long long)(a)>(long long)(b) ? (b) : (a))
-#define max(a,b)         ((long long)(a)<(long long)(b) ? (b) : (a))
+#include <algorithm>
 
 #define db2i_beint16_from_ptr2leint16(V,M) \
   do { int16 def_temp;\
@@ -159,7 +158,7 @@ const uint MAX_DB2_KEY_PARTS=120;
 const int MAX_DB2_V5R4_LIBNAME_LENGTH = 10;
 const int MAX_DB2_V6R1_LIBNAME_LENGTH = 30;
 const int MAX_DB2_SCHEMANAME_LENGTH=258; 
-const int MAX_DB2_FILENAME_LENGTH=258; 
+const uint32 MAX_DB2_FILENAME_LENGTH=258; 
 const int MAX_DB2_COLNAME_LENGTH=128;
 const int MAX_DB2_SAVEPOINTNAME_LENGTH=128;
 const int MAX_DB2_QUALIFIEDNAME_LENGTH=MAX_DB2_V6R1_LIBNAME_LENGTH + 1 + MAX_DB2_FILENAME_LENGTH;

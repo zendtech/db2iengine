@@ -61,9 +61,9 @@ BlobCollection::getSizeToAllocate(int fieldIndex, bool& shouldProtect)
 
   uint curMaxSize = table->getBlobFieldActualSize(fieldIndex);
 
-  uint defaultAllocSize = min(defaultAllocation, fieldLength);
+  uint defaultAllocSize = std::min(defaultAllocation, fieldLength);
 
-  return max(defaultAllocSize, curMaxSize);
+  return std::max(defaultAllocSize, curMaxSize);
 
 }
       

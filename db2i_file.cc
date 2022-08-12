@@ -41,9 +41,6 @@ OF SUCH DAMAGE.
 #include "db2i_misc.h"
 #include "db2i_errors.h"
 #include "my_dir.h"
-#undef min
-#undef max
-#include <algorithm>
 
 
 db2i_table::db2i_table(const TABLE_SHARE* myTable, const char* path) : 
@@ -382,15 +379,7 @@ void db2i_table::filenameToTablename(const char* in, char* out, size_t outlen)
       part4 = strend(in);
     }
   }
-  fprintf(stderr, "in %p, out %p, part1 %p, part2 %p, part3 %p, part 4 %p\n", in, out, part1, part2, part3, part4);
-  // fprintf(stderr, "in %s, out %s, part1 %s, part2 %s, part3 %s, part 4 %s\n", in, out, part1, part2, part3, part4);
-  fprintf(stderr, "outlen: %lu\n", outlen);
-  fprintf(stderr, "part2 - part1: %lu\n", (part2 - part1));
-  fprintf(stderr, "len of part1: %lu\n", strlen(part1));
   size_t num_bytes = std::min(outlen, static_cast<size_t>(part2 - part1));
-  fprintf(stderr, "Num bytes passed to memcpy: %lu\n", num_bytes);
-  //memcpy(temp, part1, min(outlen, part2 - part1));
-  //temp[min(outlen-1, part2-part1)] = 0;
   memcpy(temp, part1, std::min(outlen, static_cast<size_t>(part2 - part1)));
   fprintf(stderr, "temp: %s\n", temp);
   fprintf(stderr, "After memcpy\n");
@@ -403,11 +392,9 @@ void db2i_table::filenameToTablename(const char* in, char* out, size_t outlen)
     strcat(out, "#P#");
     accumLen += 4;
     
-    // memset(temp, 0, min(outlen, part2-part1));
-    // memcpy(temp, part3, min(outlen, part4-part3));
     memset(temp, 0, std::min(outlen, static_cast<size_t>(part2-part1)));
     memcpy(temp, part3, std::min(outlen, static_cast<size_t>(part4-part3)));
-    temp[min(outlen-1, part4-part3)] = 0;
+    temp[std::min(static_cast<size_t>(outlen-1), static_cast<size_t>(part4-part3))] = 0;
 
     accumLen += smartFilenameToTableName(temp, strend(out), outlen-accumLen);
     

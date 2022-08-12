@@ -63,7 +63,7 @@ static const char __NOT_NULL_VALUE_EBCDIC = 0xF0; // '0'
 static const char __NULL_VALUE_EBCDIC = 0xF1; // '1'
 static const char __DEFAULT_VALUE_EBCDIC = 0xC4; // 'D'
 static const char BlankASPName[19] = "                  ";
-static const int DEFAULT_MAX_ROWS_TO_BUFFER = 4096;
+static const ha_rows DEFAULT_MAX_ROWS_TO_BUFFER = 4096;
 
 static const char SAVEPOINT_PREFIX[] = {0xD4, 0xE8, 0xE2, 0xD7}; // MYSP (in EBCDIC)
 
@@ -2791,10 +2791,9 @@ int ha_ibmdb2i::prepReadBuffer(ha_rows rowsToRead, const db2i_file* file, char i
     forceSingleRowRead = true;
     rowsToRead = 1;
   }
+  rowsToRead = std::min(stats.records+1,std::min(rowsToRead, static_cast<ha_rows>(DEFAULT_MAX_ROWS_TO_BUFFER))); 
   
-  rowsToRead = min(stats.records+1,min(rowsToRead, DEFAULT_MAX_ROWS_TO_BUFFER));
-  
-  uint bufSize = min((format->readRowLen * rowsToRead), THDVAR(thd, max_read_buffer_size));
+  uint bufSize = std::min(format->readRowLen * rowsToRead,  static_cast<ha_rows>(THDVAR(thd, max_read_buffer_size)));
   multiRowReadBuf.allocBuf(format->readRowLen, format->readRowNullOffset, bufSize);
   activeReadBuf = &multiRowReadBuf;
     
@@ -2830,9 +2829,9 @@ int ha_ibmdb2i::prepWriteBuffer(ha_rows rowsToWrite, const db2i_file* file)
 
   if (unlikely(rc)) DBUG_RETURN(rc);
   
-  rowsToWrite = min(rowsToWrite, DEFAULT_MAX_ROWS_TO_BUFFER);
+  rowsToWrite = std::min(rowsToWrite, DEFAULT_MAX_ROWS_TO_BUFFER);
   
-  uint bufSize = min((format->writeRowLen * rowsToWrite), THDVAR(ha_thd(), max_write_buffer_size));
+  uint bufSize = std::min((format->writeRowLen * rowsToWrite), static_cast<ha_rows>(THDVAR(ha_thd(), max_write_buffer_size)));
   multiRowWriteBuf.allocBuf(format->writeRowLen, format->writeRowNullOffset, bufSize);
   activeWriteBuf = &multiRowWriteBuf;
 
@@ -2916,8 +2915,8 @@ int ha_ibmdb2i::flushWrite(FILE_HANDLE fileHandle, uchar* buf )
       else
       {
         char unknownIndex[MAX_DB2_FILENAME_LENGTH+1];
-        convFromEbcdic(lastDupKeyNamePtr, unknownIndex, min(lastDupKeyNameLen, MAX_DB2_FILENAME_LENGTH));
-        unknownIndex[min(lastDupKeyNameLen, MAX_DB2_FILENAME_LENGTH)] = 0;        
+        convFromEbcdic(lastDupKeyNamePtr, unknownIndex, std::min(lastDupKeyNameLen, static_cast<uint32>(MAX_DB2_FILENAME_LENGTH)));
+        unknownIndex[std::min(lastDupKeyNameLen, static_cast<uint32>(MAX_DB2_FILENAME_LENGTH))] = 0;
         getErrTxt(DB2I_ERR_UNKNOWN_IDX, unknownIndex);
       }
     }
@@ -3292,7 +3291,7 @@ void ha_ibmdb2i::doInitialRead(char orientation,
   if (forceSingleRowRead)
     rowsToBuffer = 1;
   else
-    rowsToBuffer = min(rowsToBuffer, activeReadBuf->getRowCapacity());
+    rowsToBuffer = std::min(rowsToBuffer, activeReadBuf->getRowCapacity());
         
   activeReadBuf->newReadRequest(activeHandle,
                                     orientation,
@@ -3430,7 +3429,7 @@ double ha_ibmdb2i::read_time(uint index, uint ranges, ha_rows rows)
        double dataPageCount = stats.data_file_length/IO_SIZE;
                   
        cost = (rows * dataPageCount / totalRecords) + 
-               min(idxPageCnt, (log_2(idxPageCnt) * ranges + 
+               std::min(idxPageCnt, (log_2(idxPageCnt) * ranges + 
                                 rows * (log_2(idxPageCnt) + log_2(rows) - log_2(totalRecords))));
      } 
   }
@@ -3578,8 +3577,9 @@ void ha_ibmdb2i::setIndexReadEstimate(uint index, ha_rows rows)
 
 ha_rows ha_ibmdb2i::getIndexReadEstimate(uint index)
 {
+  ha_rows i = 1;
   if (indexReadSizeEstimates)
-    return max(indexReadSizeEstimates[index], 1);
+    return std::max(indexReadSizeEstimates[index], i);
   
   return 10000; // Assume index scan if no estimate exists.
 }
