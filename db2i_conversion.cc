@@ -535,14 +535,12 @@ int ha_ibmdb2i::getFieldTypeMapping(Field* field,
           {
             if (field->type() == MYSQL_TYPE_STRING)
             {
-              // type of fieldLength = uint32
               sprintf(stringBuildBuffer, "BINARY(%u)", std::max(fieldLength, 1u));
             }
             else
             {
               if (fieldLength <= MAX_VARCHAR_LENGTH)
               {
-                 // fieldLength = uint32
                 sprintf(stringBuildBuffer, "VARBINARY(%u)", std::max(fieldLength, 1u));
               }
               else if (blobMapping == AS_VARCHAR &&
@@ -553,7 +551,6 @@ int ha_ibmdb2i::getFieldTypeMapping(Field* field,
               else 
               {
                 fieldLength = std::min(MAX_BLOB_LENGTH, fieldLength);
-                // fieldLength = uint32
                 sprintf(stringBuildBuffer, "BLOB(%u)", std::max(fieldLength, 1u));
               }
             }
@@ -589,9 +586,6 @@ int ha_ibmdb2i::getFieldTypeMapping(Field* field,
                 return 1;
               if (fieldCharSet->mbmaxlen > 1 && (!is_utf8 || is_utf8_general_ci))
               {
-                // type of fieldLength = uint32
-                // mbmaxlen = uint
-                // 1u
                 sprintf(stringBuildBuffer, "GRAPHIC(%u)", std::max(fieldLength / fieldCharSet->mbmaxlen, 1u)); // Number of characters
                 // Need to set CCSID to 1200 (UTF-16) when using multi-byte charsets
                 // As well as when the collation is utf*_general_ci because of sort sequence issues
@@ -636,14 +630,10 @@ int ha_ibmdb2i::getFieldTypeMapping(Field* field,
               }
               else
               {
-                // MAX_BLOB_LENGTH = uint32
-                // fieldLength = uint32
                 fieldLength = std::min(MAX_BLOB_LENGTH, fieldLength);
 
                 if (fieldCharSet->mbmaxlen > 1 && (!is_utf8 || is_utf8_general_ci))
                 {
-                  // fieldlength = uint32
-                  // mbmaxlen = uint
                   sprintf(stringBuildBuffer, "DBCLOB(%u)", std::max(fieldLength / fieldCharSet->mbmaxlen,1u)); // Number of characters
                   // Need to set CCSID to 1200 (UTF-16) when using multi-byte charsets
                   // As well as when the collation is utf*_general_ci because of sort sequence issues
@@ -651,7 +641,6 @@ int ha_ibmdb2i::getFieldTypeMapping(Field* field,
                 }
                 else
                 {
-                  // fieldLength = uint32
                   sprintf(stringBuildBuffer, "CLOB(%u)", std::max(fieldLength, 1u)); // Number of characters
                 }
               }
@@ -700,8 +689,6 @@ int32 ha_ibmdb2i::convertMySQLtoDB2(Field* field, const DB2Field& db2Field, char
       {
         uint precision= ((Field_new_decimal*)field)->precision;
         uint scale= field->decimals();
-        // precison = uint
-        // MAX_DEC_PRECISION = uint32
         uint db2Precision = std::min(precision, MAX_DEC_PRECISION);
         uint truncationAmount = precision - db2Precision;
         
@@ -1173,10 +1160,6 @@ int32 ha_ibmdb2i::convertMySQLtoDB2(Field* field, const DB2Field& db2Field, char
                   if (maxDisplayLength == 0 && db2FieldType == QMY_GRAPHIC)
                     maxDb2BytesToStore = 2;
                   else
-                    // bytesToStore = uint32
-                    // field->mbinlen = uint
-                    // maxDisplayLength = uint32
-                    // field->mbmaxlen = uint
                     maxDb2BytesToStore = std::min(bytesToStore * 2 / fieldCharSet->mbminlen,
                                              maxDisplayLength * 2 / fieldCharSet->mbmaxlen);
 
@@ -1222,10 +1205,6 @@ int32 ha_ibmdb2i::convertMySQLtoDB2(Field* field, const DB2Field& db2Field, char
                   else // Else Far East, special UTF8 or non-special UTF8/UCS2
                   {
                     size_t maxDb2BytesToStore;
-                    // bytesToStore = uint32
-                    // field->mbinlen = uint
-                    // maxDisplayLength = uint32
-                    // field->mbmaxlen = uint
                     maxDb2BytesToStore = std::min(bytesToStore * 2 / fieldCharSet->mbminlen,
                                              maxDisplayLength * 2 / fieldCharSet->mbmaxlen);
                     temp = getCharacterConversionBuffer(field->field_index, maxDb2BytesToStore);

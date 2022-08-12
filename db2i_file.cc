@@ -371,18 +371,13 @@ void db2i_table::filenameToTablename(const char* in, char* out, size_t outlen)
   part2 = strstr(part1, "#P#");
   if (part2)
   {
-    fprintf(stderr, "In if part2\n");
     part3 = part2 + 3;
     part4 = strchr(part3, '#');
-    if (!part4){
-      fprintf(stderr, "In if !part4\n");
+    if (!part4)
       part4 = strend(in);
-    }
   }
   size_t num_bytes = std::min(outlen, static_cast<size_t>(part2 - part1));
   memcpy(temp, part1, std::min(outlen, static_cast<size_t>(part2 - part1)));
-  fprintf(stderr, "temp: %s\n", temp);
-  fprintf(stderr, "After memcpy\n");
   temp[std::min(outlen-1, static_cast<size_t>(part2-part1))] = 0;
     
   int32 accumLen = smartFilenameToTableName(temp, out, outlen);

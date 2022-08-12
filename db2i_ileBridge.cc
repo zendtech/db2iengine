@@ -612,8 +612,6 @@ int32 db2i_ileBridge::prepOpen(const char* statement,
   {
     Qmy_MSPO0100_output* output = (Qmy_MSPO0100_output*)parmBlock->outParms;
     *rfileHandle = output->ObjHnd;
-    // output->InNxtRowOff = 
-    // output->OutNxtRowOff = 
     *recLength = std::max(output->InNxtRowOff, output->OutNxtRowOff);    
   }
 
