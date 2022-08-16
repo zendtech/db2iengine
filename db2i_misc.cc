@@ -82,7 +82,7 @@ EXTERN bool convertMySQLNameToDB2Name(const char* input,
                                bool delimit,
                                bool delimitQuotes)
 {
-  uint o = 0;
+  size_t o = 0;
   if (delimit)
     output[o++] = '"';    
 
@@ -100,7 +100,7 @@ EXTERN bool convertMySQLNameToDB2Name(const char* input,
   
   if (delimit)
     output[o++] = '"';
-  output[std::min( static_cast<size_t>(o), outlen-1)] = 0; // This isn't the most user-friendly way to handle overflows,
+  output[std::min(o, outlen-1)] = 0; // This isn't the most user-friendly way to handle overflows,
                                   // but at least its safe.
   return (o <= outlen-1);
 }

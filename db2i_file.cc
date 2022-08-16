@@ -377,8 +377,8 @@ void db2i_table::filenameToTablename(const char* in, char* out, size_t outlen)
       part4 = strend(in);
   }
   size_t num_bytes = std::min(outlen, static_cast<size_t>(part2 - part1));
-  memcpy(temp, part1, std::min(outlen, static_cast<size_t>(part2 - part1)));
-  temp[std::min(outlen-1, static_cast<size_t>(part2-part1))] = 0;
+  memcpy(temp, part1, std::min(outlen, num_bytes));
+  temp[std::min(outlen-1, num_bytes)] = 0;
     
   int32 accumLen = smartFilenameToTableName(temp, out, outlen);
   
@@ -387,9 +387,10 @@ void db2i_table::filenameToTablename(const char* in, char* out, size_t outlen)
     strcat(out, "#P#");
     accumLen += 4;
     
-    memset(temp, 0, std::min(outlen, static_cast<size_t>(part2-part1)));
-    memcpy(temp, part3, std::min(outlen, static_cast<size_t>(part4-part3)));
-    temp[std::min(static_cast<size_t>(outlen-1), static_cast<size_t>(part4-part3))] = 0;
+    memset(temp, 0, std::min(outlen, num_bytes));
+    size_t num_bytes2 = std::min(outlen, static_cast<size_t>(part4-part3));
+    memcpy(temp, part3, std::min(outlen, num_bytes2));
+    temp[std::min(static_cast<size_t>(outlen-1), num_bytes2)] = 0;
 
     accumLen += smartFilenameToTableName(temp, strend(out), outlen-accumLen);
     

@@ -2791,7 +2791,7 @@ int ha_ibmdb2i::prepReadBuffer(ha_rows rowsToRead, const db2i_file* file, char i
     forceSingleRowRead = true;
     rowsToRead = 1;
   }
-  rowsToRead = std::min(stats.records+1,std::min(rowsToRead, static_cast<ha_rows>(DEFAULT_MAX_ROWS_TO_BUFFER))); 
+  rowsToRead = std::min(stats.records+1,std::min(rowsToRead, DEFAULT_MAX_ROWS_TO_BUFFER)); 
   
   uint bufSize = std::min(format->readRowLen * rowsToRead,  static_cast<ha_rows>(THDVAR(thd, max_read_buffer_size)));
   multiRowReadBuf.allocBuf(format->readRowLen, format->readRowNullOffset, bufSize);
