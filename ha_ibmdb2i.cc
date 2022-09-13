@@ -3577,9 +3577,8 @@ void ha_ibmdb2i::setIndexReadEstimate(uint index, ha_rows rows)
 
 ha_rows ha_ibmdb2i::getIndexReadEstimate(uint index)
 {
-  ha_rows i = 1;
   if (indexReadSizeEstimates)
-    return std::max(indexReadSizeEstimates[index], i);
+    return std::max(indexReadSizeEstimates[index], ha_rows{1});
   
   return 10000; // Assume index scan if no estimate exists.
 }
