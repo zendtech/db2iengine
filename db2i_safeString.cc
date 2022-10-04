@@ -67,7 +67,7 @@ OF SUCH DAMAGE.
   
   SafeString& SafeString::strncat(const char* str, size_t len)
   {
-    uint64 amountToCopy = min((allocSize-1) - curPos, len);
+    size_t amountToCopy = std::min(allocSize-1 - curPos, len);
     memcpy(buf + curPos, str, amountToCopy);
     curPos += amountToCopy;
     buf[curPos] = 0;

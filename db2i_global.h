@@ -74,8 +74,7 @@ OF SUCH DAMAGE.
  * Explicit macro will be used.
  */
 
-#define min(a,b)         ((long long)(a)>(long long)(b) ? (b) : (a))
-#define max(a,b)         ((long long)(a)<(long long)(b) ? (b) : (a))
+#include <algorithm>
 
 #define db2i_beint16_from_ptr2leint16(V,M) \
   do { int16 def_temp;\

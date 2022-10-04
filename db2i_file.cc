@@ -346,14 +346,14 @@ size_t db2i_table::smartFilenameToTableName(const char *in, char* out, size_t ou
     {
       strncpy(out, in, outlen);
       my_free(test);
-      return min(outlen, strlen(out));
+      return std::min(outlen, strlen(out));
     }
     ++cur;
   }
 
   strncpy(out, test, outlen);
   my_free(test);
-  return min(outlen, strlen(out));
+  return std::min(outlen, strlen(out));
 }
 
 void db2i_table::filenameToTablename(const char* in, char* out, size_t outlen)
@@ -376,10 +376,13 @@ void db2i_table::filenameToTablename(const char* in, char* out, size_t outlen)
     if (!part4)
       part4 = strend(in);
   }
-  
-  memcpy(temp, part1, min(outlen, part2 - part1));
-  temp[min(outlen-1, part2-part1)] = 0;
-    
+
+  {
+    size_t num_bytes = std::min(outlen-1, static_cast<size_t>(part2 - part1));
+    memcpy(temp, part1, num_bytes);
+    temp[num_bytes] = 0;
+  }
+
   int32 accumLen = smartFilenameToTableName(temp, out, outlen);
   
   if (part2 && (accumLen + 4 < (int) outlen))
@@ -387,9 +390,11 @@ void db2i_table::filenameToTablename(const char* in, char* out, size_t outlen)
     strcat(out, "#P#");
     accumLen += 4;
     
-    memset(temp, 0, min(outlen, part2-part1));
-    memcpy(temp, part3, min(outlen, part4-part3));
-    temp[min(outlen-1, part4-part3)] = 0;
+    {
+      size_t num_bytes = std::min(outlen, static_cast<size_t>(part4-part3));
+      memcpy(temp, part3, std::min(outlen, num_bytes));
+      temp[std::min(static_cast<size_t>(outlen-1), num_bytes)] = 0;
+    }
 
     accumLen += smartFilenameToTableName(temp, strend(out), outlen-accumLen);
     
@@ -496,7 +501,7 @@ int32 db2i_table::appendQualifiedIndexFileName(const char* indexName,
   
   strncat(generatedName, 
           tableName+1,
-          min(strlen(tableName), (MAX_DB2_FILENAME_LENGTH-lenWithoutFile))-2 );
+          std::min(strlen(tableName), static_cast<size_t>(MAX_DB2_FILENAME_LENGTH-lenWithoutFile))-2 );
 
   char finalName[MAX_DB2_FILENAME_LENGTH+1];
   convertMySQLNameToDB2Name(generatedName, finalName, sizeof(finalName), true, (format==ASCII_SQL));

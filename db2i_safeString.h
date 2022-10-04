@@ -65,7 +65,7 @@ public:
 
 private: 
   char* buf;
-  uint64 curPos;
+  size_t curPos;
   size_t allocSize;
 };
 
